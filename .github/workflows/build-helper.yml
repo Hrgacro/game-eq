@@ -1,0 +1,47 @@
+name: Build GameEQ Helper
+
+# Builds GameEQHelper.exe on GitHub's Windows machines and publishes it as a Release.
+# Runs automatically when anything in /helper changes, or by hand from the Actions tab.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "helper/**"
+      - ".github/workflows/build-helper.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build
+        run: dotnet build helper/GameEQHelper.csproj -c Release
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: GameEQHelper
+          path: helper/bin/Release/net48/GameEQHelper.exe
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: helper-v1.0.${{ github.run_number }}
+          name: GameEQ Helper 1.0.${{ github.run_number }}
+          make_latest: true
+          body: |
+            **Download `GameEQHelper.exe` below** and run it.
+
+            - Needs Windows 10/11 and [Equalizer APO](https://sourceforge.net/projects/equalizerapo/) (the Helper tells you if it's missing).
+            - Windows may show "Windows protected your PC" because the app isn't code-signed yet: click **More info → Run anyway**.
+            - Undo everything any time: tray icon → *Restore original sound & uninstall*.
+          files: helper/bin/Release/net48/GameEQHelper.exe

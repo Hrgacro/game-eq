@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GameEQ — EQ presets for every game</title>
+<style>
+  :root{
+    --bg:#0d0f14; --panel:#151922; --panel2:#1c212c; --line:#2a3140;
+    --text:#e8ecf3; --muted:#8b94a7; --accent:#38e1a4; --accent2:#4aa8ff; --warn:#ffb547;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 18px 60px}
+  header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  h1{margin:0;font-size:28px;letter-spacing:.5px}
+  h1 span{color:var(--accent)}
+  .tag{color:var(--muted)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin:26px 0 10px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:9px 14px;border-radius:10px;cursor:pointer;font:inherit;transition:.12s}
+  .chip:hover{border-color:#3d4659}
+  .chip.on{background:rgba(56,225,164,.12);border-color:var(--accent);color:var(--accent)}
+  .chip small{display:block;color:var(--muted);font-size:12px}
+  .chip.on small{color:#9fe9cd}
+  .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  input[type=range]{width:240px;accent-color:var(--accent)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:22px}
+  #graph{width:100%;height:auto;display:block}
+  /* dropdowns */
+  .dd{position:relative;max-width:560px}
+  .dd-btn{width:100%;display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:10px 14px;border-radius:14px;cursor:pointer;font:inherit;text-align:left;transition:.12s}
+  .dd-btn:hover,.dd.open .dd-btn{border-color:var(--accent)}
+  .dd-btn .chev{margin-left:auto;color:var(--muted);transition:.15s}
+  .dd.open .dd-btn .chev{transform:rotate(180deg)}
+  .thumb{width:56px;height:56px;border-radius:12px;flex:none;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--panel2)}
+  .thumb svg,.thumb img{width:100%;height:100%;display:block;object-fit:cover}
+  .dd-title{font-weight:600}
+  .dd-sub{color:var(--muted);font-size:12.5px}
+  .dd-panel{position:absolute;z-index:20;left:0;right:0;top:calc(100% + 6px);background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.45);padding:8px;display:none;max-height:430px;overflow:auto}
+  .dd.open .dd-panel{display:block}
+  .dd-search{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 12px;font:inherit;margin-bottom:6px;outline:none}
+  .dd-search:focus{border-color:var(--accent)}
+  .dd-group{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1.3px;padding:10px 8px 4px}
+  .dd-item{display:flex;align-items:center;gap:12px;padding:7px 8px;border-radius:10px;cursor:pointer}
+  .dd-item .thumb{width:44px;height:44px;border-radius:10px}
+  .dd-item:hover,.dd-item.hl{background:var(--panel2)}
+  .dd-item.sel .dd-title{color:var(--accent)}
+  .dd-item .tick{margin-left:auto;color:var(--accent);visibility:hidden}
+  .dd-item.sel .tick{visibility:visible}
+  .dd-empty{color:var(--muted);padding:10px}
+  .badge{display:inline-block;font-size:11px;padding:1px 7px;border-radius:20px;border:1px solid var(--line);color:var(--muted);margin-left:6px;vertical-align:1px}
+  .badge.ok{border-color:rgba(56,225,164,.5);color:var(--accent)}
+  /* game info card */
+  .gameinfo{display:flex;gap:14px;align-items:flex-start;max-width:560px;margin-top:10px;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(135deg,var(--g1,#1c212c) 0%,rgba(21,25,34,.9) 70%)}
+  .gameinfo .listen{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .gameinfo .listen span{font-size:12px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);padding:2px 8px;border-radius:20px}
+  .gameinfo p{margin:4px 0 0;font-size:13px;color:#c9d0dd}
+  .st-wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+  #stCanvas{width:360px;max-width:100%;aspect-ratio:1;background:radial-gradient(circle at 50% 50%,#1a2030 0%,#10131a 70%);border:1px solid var(--line);border-radius:14px}
+  .st-side{flex:1;min-width:240px}
+  .st-side .listen{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .st-side .listen span{font-size:12px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);display:inline-flex;align-items:center;gap:6px}
+  .st-side .listen i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .seg{display:inline-flex;margin-top:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{background:var(--panel2);color:var(--muted);border:0;padding:9px 14px;font:500 14px system-ui;cursor:pointer}
+  .seg button.on{background:rgba(56,225,164,.15);color:var(--accent)}
+  .filebtn{display:inline-block;background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:9px 14px;border-radius:10px;font:500 14px system-ui;cursor:pointer}
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-variant-numeric:tabular-nums}
+  th,td{padding:7px 4px;text-align:center;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:500;font-size:12px}
+  td.pos{color:var(--accent)} td.neg{color:var(--accent2)}
+  .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  button.main{background:var(--accent);color:#06140e;border:0;padding:11px 16px;border-radius:10px;font:600 14px system-ui;cursor:pointer}
+  button.sec{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:11px 16px;border-radius:10px;font:500 14px system-ui;cursor:pointer}
+  button:active{transform:translateY(1px)}
+  code{background:var(--panel2);padding:2px 6px;border-radius:6px;font-size:13px}
+  pre{background:var(--panel2);padding:12px;border-radius:10px;overflow:auto;font-size:13px;margin:10px 0 0}
+  .note{color:var(--muted);font-size:13px}
+  .warn{color:var(--warn)}
+  ol{padding-left:20px} li{margin:6px 0}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#06140e;padding:9px 16px;border-radius:10px;font-weight:600;opacity:0;transition:.2s;pointer-events:none}
+  .toast.show{opacity:1}
+  footer{margin-top:40px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Game<span>EQ</span></h1>
+    <div class="tag">Click what you want to hear. Get an EQ for any headset.</div>
+  </header>
+
+  <h2>1. Game</h2>
+  <div class="dd" id="gameDD"></div>
+  <div class="gameinfo" id="gameInfo"></div>
+
+  <h2>2. What do you want? <span style="text-transform:none;letter-spacing:0">(pick any)</span></h2>
+  <div class="chips" id="goals"></div>
+
+  <h2>3. Your headset</h2>
+  <div class="dd" id="hsDD"></div>
+  <div class="chips" id="corr" style="margin-top:10px"></div>
+  <p class="note" id="appTip" style="margin:10px 0 0"></p>
+
+  <h2>4. Strength</h2>
+  <div class="row">
+    <input type="range" id="intensity" min="25" max="150" step="5" value="100">
+    <span id="intVal">100%</span>
+    <button class="sec" id="reset">Reset</button>
+  </div>
+
+  <div class="card">
+    <svg id="graph" viewBox="0 0 900 260" role="img" aria-label="EQ curve"></svg>
+    <table>
+      <thead><tr id="thead"></tr></thead>
+      <tbody><tr id="tbody"></tr></tbody>
+    </table>
+    <p class="note" id="preampNote"></p>
+    <div class="btns">
+      <button class="main" id="apply">Apply to my headset</button>
+      <button class="sec" id="dl">Download for Equalizer APO</button>
+      <button class="sec" id="copyLine">Copy GraphicEQ line</button>
+      <button class="sec" id="copyTable">Copy values as text</button>
+      <button class="sec" id="share">Copy share link</button>
+    </div>
+    <p class="note" id="applyNote">“Apply to my headset” needs the free <b>GameEQ Helper</b> for Windows. <a id="helperLink" style="color:var(--accent2)">Download it here</a>, run it once, then click Apply.</p>
+  </div>
+
+  <div class="card" id="soundTest">
+    <h2 style="margin-top:0">Sound test: hear the difference</h2>
+    <p class="note" style="margin-top:-4px">Put your headset on and start at <b>low volume</b>. The scene plays sounds typical for the selected game around you. Switch between <b>EQ on</b> and <b>EQ off</b> while it plays (the two are level-matched, so the louder one doesn't automatically win).</p>
+    <div class="st-wrap">
+      <canvas id="stCanvas" width="360" height="360"></canvas>
+      <div class="st-side">
+        <div class="dd-title" id="stScene">Scene</div>
+        <div class="listen" id="stLegend"></div>
+        <div class="btns">
+          <button class="main" id="stPlay">▶ Play scene</button>
+        </div>
+        <div class="seg" role="group" aria-label="Scene" id="stModeSeg" style="margin-top:12px;margin-right:8px">
+          <button id="stNormal" class="on">Normal round</button><button id="stFight">Gunfight</button>
+        </div>
+        <div class="seg" role="group" aria-label="A/B">
+          <button id="stOn" class="on">EQ on</button><button id="stOff">EQ off (original)</button>
+        </div>
+        <label class="row note" style="margin-top:12px;gap:8px;cursor:pointer"><input type="checkbox" id="stComp" style="accent-color:var(--accent)"> Add compression <span class="badge">Windows setting</span></label>
+        <p class="note" style="margin:2px 0 0" id="stCompNote">Turns loud shots down and quiet steps up, like Windows “Loudness Equalization”. It's not part of the EQ file; see “Gunfight tips” below.</p>
+        <div class="row" style="margin-top:12px"><span class="note">Volume</span><input type="range" id="stVol" min="0" max="100" value="45" style="width:160px"></div>
+        <div style="margin-top:14px">
+          <label class="sec filebtn">Use your own clip…<input type="file" id="stFile" accept="audio/*,video/*" hidden></label>
+          <p class="note" style="margin:6px 0 0">Record a few seconds of your own gameplay and play it through the EQ. It stays on your PC; nothing is uploaded.</p>
+          <video id="stVideo" controls playsinline style="display:none;width:100%;border-radius:10px;margin-top:8px;background:#000"></video>
+        </div>
+      </div>
+    </div>
+    <p class="note warn" style="margin-top:12px">The scene uses sounds generated in your browser that imitate game sounds. They aren't the real game files, so the final test is still in-game.</p>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">How to use it</h2>
+    <p><b>Option 1: one click with GameEQ Helper (recommended, Windows)</b></p>
+    <ol>
+      <li><a class="helperLink" style="color:var(--accent2)">Download GameEQ Helper</a> and run it. If Windows says “Windows protected your PC”, click <i>More info → Run anyway</i> (the app is open source but not code-signed yet).</li>
+      <li>If you don't have <a href="https://sourceforge.net/projects/equalizerapo/" style="color:var(--accent2)">Equalizer APO</a> yet, the Helper sends you there. Install it, tick your headset, restart the PC, and open the Helper again.</li>
+      <li>Allow the one-time permission prompt. After that, <b>Apply to my headset</b> on this page works instantly, and the green bars icon next to the clock has quick presets.</li>
+      <li>To undo everything: right-click the icon and choose <i>Restore original sound &amp; uninstall</i>.</li>
+    </ol>
+    <p><b>Option 2: headset app (G HUB, SteelSeries GG, Synapse, NGENUITY…):</b> open its EQ and set each band to the numbers in the table. If it has 5 bands, use 62 Hz / 250 Hz / 1 kHz / 4 kHz / 16 kHz.</p>
+    <p><b>Option 3: Equalizer APO by hand:</b> click <b>Download for Equalizer APO</b>, put the file in <code>C:\Program Files\EqualizerAPO\config\</code> and add the line <code>Include: gameeq.txt</code> to <code>config.txt</code>.</p>
+    <p><b>Gunfight tips (when shots hide footsteps)</b></p>
+    <ul class="note" style="color:#c9d0dd">
+      <li><b>“Gunfight clarity”</b> trims the boom (62–250 Hz) and crack (8 kHz) of gunshots and lifts 2–4 kHz, so shots take up less of the space footsteps need. It helps, but an EQ can't fully separate them, because shots and steps share the same 1–5 kHz range.</li>
+      <li><b>Compression helps more during fights:</b> it turns loud sounds down and quiet ones up. On Windows: Sound settings → your headset → <i>Enhancements</i> (or <i>Audio enhancements</i>) → <b>Loudness Equalization</b>, if your device offers it. Try it in the Sound test with “Add compression”.</li>
+      <li>Trade-off: with compression, far and near steps sound more alike, so distance is harder to judge. Many players use it only for loud shooters (CoD, Apex, PUBG) and keep it off in CS2. Test both.</li>
+      <li>Keep game volume moderate. When everything is maxed, loud shots “stun” your ears and quiet steps get lost even faster.</li>
+    </ul>
+    <p class="note">Works outside the game (system audio), so it doesn't touch game files and is safe with VAC, Vanguard and FACEIT. It also affects Discord and music on that device.</p>
+    <p class="note warn">Headset corrections come from lab measurements (oratory1990, RTINGS, Crinacle via AutoEq) and bring each model closer to a neutral reference before the game EQ is added. Real heads differ: fit, glasses, worn pads and unit-to-unit variation all change the sound a bit. If Full sounds too sharp, use Half. Before using it, set your headset app's own EQ to flat and turn off virtual surround.</p>
+  </div>
+
+  <footer>GameEQ · open source · headset corrections: <a href="https://github.com/jaakkopasanen/AutoEq" style="color:var(--accent2)">AutoEq</a> (MIT) using measurements by oratory1990, RTINGS and Crinacle · game presets are community starting points, PRs welcome.</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const BANDS = [31,62,125,250,500,1000,2000,4000,8000,16000];
+const LABELS = ["31","62","125","250","500","1k","2k","4k","8k","16k"];
+
+// Base curves per game (dB per band)
+const GAMES = {
+  cs2:      {name:"CS2",           curve:[-3,-2, 0,-1, 0, 1, 3, 3,-2,-2]},
+  valorant: {name:"Valorant",      curve:[-3,-2,-1,-1, 0, 1, 2, 3, 1,-1]},
+  pubg:     {name:"PUBG",          curve:[-2,-1, 1, 0, 0, 1, 2, 3, 0,-1]},
+  fortnite: {name:"Fortnite",      curve:[-2,-1, 0,-1, 0, 1, 2, 3, 0,-1]},
+  apex:     {name:"Apex Legends",  curve:[-3,-2, 0,-1, 0, 1, 3, 3,-1,-1]},
+  cod:      {name:"Call of Duty",  curve:[-3,-2, 0,-1, 0, 1, 3, 2,-1,-1]},
+  lol:      {name:"League of Legends", curve:[0,0,0,0,0,1,1,1,0,0]},
+  rl:       {name:"Rocket League", curve:[ 0, 0, 0, 0, 0, 0, 1, 1, 0, 0]},
+  fc:       {name:"EA FC",         curve:[ 1, 1, 0, 0, 0, 1, 1, 0, 0, 0]},
+  flat:     {name:"Other / Music / Movies", curve:[0,0,0,0,0,0,0,0,0,0]},
+};
+
+// Goals are added on top of the game curve
+const GOALS = {
+  steps:  {name:"Footsteps",      hint:"hear enemies earlier",       curve:[-2,-1, 0, 0, 0, 1, 2, 2, 0, 0]},
+  rich:   {name:"Richer sound",   hint:"fuller, more body",          curve:[ 2, 2, 1, 0, 0, 0, 0, 0, 1, 1]},
+  soft:   {name:"Less harsh",     hint:"softer headshot / gun crack",curve:[ 0, 0, 0, 0, 0, 0, 0,-1,-3,-2]},
+  voice:  {name:"Voice clarity",  hint:"clearer comms",              curve:[-1,-1,-1, 0, 1, 2, 2, 1, 0, 0]},
+  bass:   {name:"Bass boost",     hint:"music, movies, explosions",  curve:[ 4, 3, 2, 0, 0, 0, 0, 0, 0, 0]},
+  night:  {name:"Night mode",     hint:"no booms, low volume play",  curve:[-4,-3,-1, 0, 0, 1, 1, 0,-1,-1]},
+  gunfight:{name:"Gunfight clarity", hint:"steps stay clearer during shots", curve:[-1,-2,-2,-1, 0, 0, 1, 1,-2, 0]},
+};
+
+// Headset correction is added after strength.
+const HEADSETS = {
+  // Measured corrections: 10-band 'FixedBandEQ' results from AutoEq (github.com/jaakkopasanen/AutoEq),
+  // computed from lab measurements by oratory1990, RTINGS and Crinacle toward the Harman target.
+  // When two labs measured the same model, their results are averaged.
+  // 31 Hz and 16 kHz are capped at ±3 dB (they depend mostly on fit/seal), other bands at ±6 dB.
+  // Top models by CS2 pro usage (csdb.gg, 2026).
+  cloud2: {name:"HyperX Cloud II", hint:"wired", src:"oratory1990 + RTINGS", app:"No EQ app for this one, so use GameEQ Helper or Equalizer APO.", curve:[1.5,-0.5,-4,-0.5,1.5,2,-2,5,-5,-3]},
+  cloud2w: {name:"HyperX Cloud II Wireless", hint:"", src:"RTINGS", app:"HyperX NGENUITY → Equalizer (turn off DTS for competitive play).", curve:[-1,-1,-3,-1.5,2,2.5,-1,2.5,-4.5,-3]},
+  bs3pro: {name:"Razer BlackShark V3 Pro", hint:"not measured yet", src:null, app:"Razer Synapse → Audio → Equalizer (turn off THX Spatial for competitive play).", curve:[0,0,0,0,0,0,0,0,0,0]},
+  bs2pro: {name:"Razer BlackShark V2 Pro", hint:"2023 model", src:"RTINGS (2023 model)", app:"Razer Synapse → Audio → Equalizer (turn off THX Spatial for competitive play).", curve:[3,3.5,-1.5,0.5,4.5,-1,-2,3,-5.5,-1.5]},
+  gprox2: {name:"Logitech G PRO X 2", hint:"", src:"RTINGS", app:"Logitech G HUB → Equalizer → Advanced (turn off DTS and Blue VO!CE processing on what you hear).", curve:[-2.5,-4,-3.5,1.5,-1.5,-1,2,2,-0.5,3]},
+  gprox: {name:"Logitech G PRO X", hint:"wired / USB DAC", src:"RTINGS + Crinacle", app:"Logitech G HUB → Equalizer → Advanced (needs the USB DAC; with 3.5 mm use GameEQ Helper).", curve:[1.5,2.5,-6,-2.5,2,0.5,-1.5,5.5,1,3]},
+  cloud3: {name:"HyperX Cloud III", hint:"wired", src:"RTINGS", app:"HyperX NGENUITY → Equalizer (turn off DTS for competitive play).", curve:[3,1.5,3.5,1,-0.5,-2.5,-1.5,5,-5.5,-2.5]},
+  cloud3w: {name:"HyperX Cloud III Wireless", hint:"", src:"RTINGS", app:"HyperX NGENUITY → Equalizer (turn off DTS for competitive play).", curve:[3,-1,-0.5,2.5,-1.5,-3,0.5,3.5,-2,3]},
+  alpha: {name:"HyperX Cloud Alpha", hint:"wired", src:"oratory1990 + RTINGS", app:"No EQ app for this one, so use GameEQ Helper or Equalizer APO.", curve:[2.5,1,-2,-3.5,1,2,-2,5,-1.5,-3]},
+  alphaw: {name:"HyperX Cloud Alpha Wireless", hint:"", src:"RTINGS", app:"HyperX NGENUITY → Equalizer (turn off DTS for competitive play).", curve:[-3,-1.5,-3,0,-0.5,4.5,-1,6,-6,-2.5]},
+  alpha2: {name:"HyperX Cloud Alpha 2 Wireless", hint:"2025 model", src:"SoundGuys (B&K 5128), calculated with AutoEq's method", app:"HyperX NGENUITY → Equalizer (turn off DTS / spatial audio for competitive play). Or use GameEQ Helper.", curve:[-0.5,2.5,-0.5,0.5,1,0,1,4.5,-1,3]},
+  bs2: {name:"Razer BlackShark V2", hint:"USB", src:"RTINGS", app:"Razer Synapse → Audio → Equalizer (turn off THX Spatial for competitive play).", curve:[3,1.5,-1,-1.5,2,3,0,-1,-3,-3]},
+  bs2x: {name:"Razer BlackShark V2 X", hint:"budget", src:"RTINGS", app:"No EQ app for this one, so use GameEQ Helper or Equalizer APO.", curve:[-1,-2,-6,0.5,-0.5,-1.5,1,5.5,-0.5,-1.5]},
+  novaprow: {name:"SteelSeries Arctis Nova Pro Wireless", hint:"", src:"oratory1990", app:"SteelSeries GG → Sonar → Game EQ (start from Sonar's flat preset, don't stack presets).", curve:[-3,0.5,-6,0.5,0.5,-0.5,0.5,3,3,-3]},
+  novapro: {name:"SteelSeries Arctis Nova Pro", hint:"wired", src:"RTINGS", app:"SteelSeries GG → Sonar → Game EQ (start from Sonar's flat preset, don't stack presets).", curve:[-3,3,-6,2.5,3,-1,-1.5,6,-5.5,2.5]},
+  nova7: {name:"SteelSeries Arctis Nova 7", hint:"", src:"RTINGS", app:"SteelSeries GG → Sonar → Game EQ (start from Sonar's flat preset, don't stack presets).", curve:[-3,-1.5,-6,2.5,2,-0.5,0,4,-5,3]},
+  nova5: {name:"SteelSeries Arctis Nova 5", hint:"", src:"RTINGS", app:"SteelSeries GG → Sonar → Game EQ (start from Sonar's flat preset, don't stack presets).", curve:[-0.5,0.5,-6,-2.5,6,0.5,-1.5,5,-5.5,3]},
+  nova13: {name:"SteelSeries Arctis Nova 1 / 3", hint:"", src:"RTINGS", app:"SteelSeries GG → Sonar → Game EQ (start from Sonar's flat preset, don't stack presets).", curve:[1.5,1,-3,-3.5,2.5,0,-2,6,-5.5,1.5]},
+  hs80: {name:"Corsair HS80", hint:"", src:"RTINGS", app:"Corsair iCUE → Equalizer.", curve:[3,1,-3,-5.5,1,-2,3,5,1.5,3]},
+  // Generic, for any other headset (no measurement, small manual corrections)
+  neutral: {name:"Other — balanced", hint:"not sure? pick this", src:null, app:"Use your headset's EQ app, GameEQ Helper or Equalizer APO.", curve:[0,0,0,0,0,0,0,0,0,0]},
+  bright:  {name:"Other — bright / sharp", hint:"FPS-tuned", src:null, app:"Use your headset's EQ app, GameEQ Helper or Equalizer APO.", curve:[0,0,0,0,0,0,-1,-1,-2,-1]},
+  bassy:   {name:"Other — bassy / boomy", hint:"lots of low end", src:null, app:"Use your headset's EQ app, GameEQ Helper or Equalizer APO.", curve:[-2,-2,-1,0,0,0,0,0,0,0]},
+};
+
+// ---------- Game details: what matters in each game ----------
+const GAME_META = {
+  cs2:      {genre:"Tactical shooter", icon:"crosshair", c1:"#e8a33d", c2:"#3a2a12", rec:["steps","gunfight"],
+             listen:["Footsteps","Reloads","Defuse / plant","Utility"], tip:"Footsteps sit around 1–5 kHz. “Gunfight clarity” trims the boom and crack of shots so steps get buried less. Add “Less harsh” if the headshot “dink” still hurts."},
+  valorant: {genre:"Tactical shooter", icon:"diamond", c1:"#ff5a5f", c2:"#3a1517", rec:["steps","gunfight"],
+             listen:["Footsteps","Ability cues","Spike","Ult voice lines"], tip:"Ability sounds are bright and sharp. Boost steps, soften the top end."},
+  pubg:     {genre:"Battle royale", icon:"parachute", c1:"#f2c14e", c2:"#3a3014", rec:["steps"],
+             listen:["Gunshot direction","Vehicles","Indoor footsteps","Doors"], tip:"Long-range shot direction and the low ‘thump’ of indoor steps matter, so don't cut too much bass."},
+  fortnite: {genre:"Battle royale", icon:"brick", c1:"#8f7bff", c2:"#221c44", rec:["steps"],
+             listen:["Footsteps","Building / edits","Chests","Shotguns"], tip:"Lots of loud building and explosions. Add “Night mode” if long sessions feel tiring."},
+  apex:     {genre:"Battle royale", icon:"triangle", c1:"#ff6b4a", c2:"#3a1a12", rec:["steps","gunfight"],
+             listen:["Footsteps","Ziplines","Abilities","Shield cracks"], tip:"Mixed loud gunfire and quiet steps. Footsteps + Less harsh works well."},
+  cod:      {genre:"Arena shooter", icon:"tag", c1:"#9fd356", c2:"#1f2e12", rec:["steps","gunfight"],
+             listen:["Footsteps","Killstreaks","Reloads","Explosions"], tip:"Explosions carry a lot of bass, and the low end is already trimmed in this preset."},
+  lol:      {genre:"MOBA", icon:"sword", c1:"#c9a85b", c2:"#2e2614", rec:["voice"],
+             listen:["Ability cues","Pings","Voice comms","Dragon / Baron"], tip:"Clear ability and ping sounds plus comms. Positional audio matters less than clarity."},
+  rl:       {genre:"Sports / car soccer", icon:"car", c1:"#4aa8ff", c2:"#12243a", rec:["voice"],
+             listen:["Ball hits","Boost","Nearby cars","Quick chat"], tip:"Ball-hit timing and cars behind you. A light, clear EQ is best."},
+  fc:       {genre:"Football", icon:"ball", c1:"#3ddc84", c2:"#11301f", rec:["rich"],
+             listen:["Commentary","Crowd","Ball / kicks"], tip:"Not competitive audio, so make it full and atmospheric."},
+  flat:     {genre:"Music & movies", icon:"note", c1:"#e86fd2", c2:"#341630", rec:["rich","bass"],
+             listen:["Bass","Vocals","Detail"], tip:"For everything outside games."},
+};
+
+// ---------- Headset look + brand (illustrations, not product photos) ----------
+// To use your own photo instead: add  photo:"images/headsets/<key>.jpg"  to a model here.
+const BRANDS = {hyperx:{name:"HyperX", accent:"#e2231a"}, razer:{name:"Razer", accent:"#44d62c"},
+  logitech:{name:"Logitech G", accent:"#00b8fc"}, steelseries:{name:"SteelSeries", accent:"#ff5a1f"},
+  corsair:{name:"Corsair", accent:"#f5d000"}, other:{name:"Other / not listed", accent:"#8b94a7"}};
+const HS_LOOK = {
+  cloud2:{brand:"hyperx",cup:"round",band:"metal"}, cloud2w:{brand:"hyperx",cup:"round",band:"metal",wireless:1},
+  cloud3:{brand:"hyperx",cup:"round",band:"metal"}, cloud3w:{brand:"hyperx",cup:"round",band:"metal",wireless:1},
+  alpha:{brand:"hyperx",cup:"oval",band:"frame"}, alphaw:{brand:"hyperx",cup:"oval",band:"frame",wireless:1},
+  alpha2:{brand:"hyperx",cup:"oval",band:"frame",wireless:1},
+  bs3pro:{brand:"razer",cup:"oval",band:"plain",wireless:1}, bs2pro:{brand:"razer",cup:"oval",band:"plain",wireless:1},
+  bs2:{brand:"razer",cup:"oval",band:"plain"}, bs2x:{brand:"razer",cup:"oval",band:"plain"},
+  gprox2:{brand:"logitech",cup:"round",band:"frame",wireless:1}, gprox:{brand:"logitech",cup:"round",band:"frame"},
+  novaprow:{brand:"steelseries",cup:"oval",band:"strap",wireless:1}, novapro:{brand:"steelseries",cup:"oval",band:"strap"},
+  nova7:{brand:"steelseries",cup:"oval",band:"strap",wireless:1}, nova5:{brand:"steelseries",cup:"oval",band:"strap",wireless:1},
+  nova13:{brand:"steelseries",cup:"oval",band:"strap"},
+  hs80:{brand:"corsair",cup:"square",band:"strap",wireless:1},
+  neutral:{brand:"other",cup:"round",band:"plain"}, bright:{brand:"other",cup:"round",band:"plain"}, bassy:{brand:"other",cup:"round",band:"plain"},
+};
+
+function headsetArt(key){
+  const L = HS_LOOK[key] || {brand:"other",cup:"round",band:"plain"};
+  const a = BRANDS[L.brand].accent, body="#1b1f27", edge="#3a4150";
+  const cup = side => {
+    const x = side<0 ? 14 : 66;
+    if (L.cup==="oval")   return `<ellipse cx="${x}" cy="54" rx="11" ry="15" fill="${body}" stroke="${edge}" stroke-width="2"/><ellipse cx="${x}" cy="54" rx="5" ry="8" fill="${a}" opacity=".9"/>`;
+    if (L.cup==="square") return `<rect x="${x-11}" y="40" width="22" height="28" rx="7" fill="${body}" stroke="${edge}" stroke-width="2"/><rect x="${x-4}" y="48" width="8" height="12" rx="3" fill="${a}" opacity=".9"/>`;
+    return `<circle cx="${x}" cy="54" r="13" fill="${body}" stroke="${edge}" stroke-width="2"/><circle cx="${x}" cy="54" r="6" fill="${a}" opacity=".9"/>`;
+  };
+  let band = `<path d="M14 42 C14 8, 66 8, 66 42" fill="none" stroke="${edge}" stroke-width="6" stroke-linecap="round"/>`;
+  if (L.band==="metal") band += `<path d="M14 42 C14 8, 66 8, 66 42" fill="none" stroke="#9aa3b2" stroke-width="2" stroke-linecap="round"/>`;
+  if (L.band==="frame") band += `<path d="M10 44 C10 4, 70 4, 70 44" fill="none" stroke="#5b6475" stroke-width="2"/>`;
+  if (L.band==="strap") band += `<path d="M20 34 C22 18, 58 18, 60 34" fill="none" stroke="${a}" stroke-width="3" opacity=".7" stroke-linecap="round"/>`;
+  const mic = L.wireless ? `<path d="M60 64 l7 7" stroke="${a}" stroke-width="2" stroke-linecap="round"/><circle cx="70" cy="74" r="0" />` :
+                           `<path d="M20 62 Q22 76 38 76" fill="none" stroke="#5b6475" stroke-width="2.5" stroke-linecap="round"/><circle cx="39" cy="76" r="3" fill="${a}"/>`;
+  return `<svg viewBox="0 0 80 84" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="84" fill="#151922"/>${band}${cup(-1)}${cup(1)}${mic}</svg>`;
+}
+function headsetThumb(key){
+  const photo = HEADSETS[key] && HEADSETS[key].photo;
+  return photo ? `<img src="${photo}" alt="" loading="lazy">` : headsetArt(key);
+}
+
+const ICONS = {
+  crosshair:`<circle cx="0" cy="0" r="14" fill="none" stroke="currentColor" stroke-width="3"/><path d="M0-22v12M0 10v12M-22 0h12M10 0h12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle r="2.5" fill="currentColor"/>`,
+  diamond:`<path d="M0-18 18 0 0 18-18 0Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M0-8v-14M0 8v14M-8 0h-14M8 0h14" stroke="currentColor" stroke-width="2.5"/>`,
+  parachute:`<path d="M-20-2C-20-22 20-22 20-2Z" fill="currentColor" opacity=".9"/><path d="M-20-2 0 18 20-2M-7-2 0 18 7-2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="-4" y="16" width="8" height="8" rx="2" fill="currentColor"/>`,
+  brick:`<g fill="none" stroke="currentColor" stroke-width="3"><rect x="-20" y="-16" width="40" height="32" rx="3"/><path d="M-20-5h40M-20 6h40M-6-16v11M8-5v11M-6 6v10"/></g>`,
+  triangle:`<path d="M0-20 20 16H-20Z" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/><path d="M0-6 8 9H-8Z" fill="currentColor"/>`,
+  tag:`<rect x="-14" y="-18" width="28" height="36" rx="8" fill="none" stroke="currentColor" stroke-width="3"/><circle cy="-10" r="3" fill="currentColor"/><path d="M-7 2h14M-7 9h10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>`,
+  sword:`<path d="M14-18-6 2l4 4 20-20 0-4Z" fill="currentColor"/><path d="M-10 0l10 10M-14 14l6-6" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>`,
+  car:`<path d="M-20 8v-8l6-10h20l8 10h6v8Z" fill="currentColor"/><circle cx="-11" cy="10" r="5" fill="#0d0f14" stroke="currentColor" stroke-width="2.5"/><circle cx="11" cy="10" r="5" fill="#0d0f14" stroke="currentColor" stroke-width="2.5"/>`,
+  ball:`<circle r="18" fill="none" stroke="currentColor" stroke-width="3"/><path d="M0-7 7-2 4 6H-4L-7-2Z" fill="currentColor"/><path d="M0-7V-17M7-2l10-3M4 6l6 9M-4 6l-6 9M-7-2l-10-3" stroke="currentColor" stroke-width="2"/>`,
+  note:`<path d="M-6 10V-16l18-4v24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/><circle cx="-11" cy="11" r="6" fill="currentColor"/><circle cx="7" cy="7" r="6" fill="currentColor"/>`,
+};
+function gameArt(key){
+  const m = GAME_META[key];
+  return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g_${key}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${m.c1}" stop-opacity=".45"/><stop offset="1" stop-color="${m.c2}"/></linearGradient></defs><rect width="80" height="80" fill="url(#g_${key})"/><g transform="translate(40 40)" style="color:${m.c1}">${ICONS[m.icon]}</g></svg>`;
+}
+
+// ---------- Searchable dropdown with pictures ----------
+function makeDropdown(el, {items, getSelected, onPick, placeholder}){
+  // items: [{key, title, sub, group, thumb, badge}]
+  el.innerHTML = `<button class="dd-btn" type="button" aria-haspopup="listbox"></button>
+    <div class="dd-panel" role="listbox"><input class="dd-search" placeholder="${placeholder}"><div class="dd-list"></div></div>`;
+  const btn = el.querySelector(".dd-btn"), search = el.querySelector(".dd-search"), list = el.querySelector(".dd-list");
+  let hl = -1, shown = [];
+  const row = (it, cls) => `<div class="${cls}" data-key="${it.key}"><div class="thumb">${it.thumb}</div><div><div class="dd-title">${it.title}${it.badge||""}</div><div class="dd-sub">${it.sub||""}</div></div>${cls.includes("dd-item")?'<span class="tick">✓</span>':''}</div>`;
+  function renderBtn(){
+    const it = items().find(i=>i.key===getSelected());
+    btn.innerHTML = `<div class="thumb">${it.thumb}</div><div><div class="dd-title">${it.title}${it.badge||""}</div><div class="dd-sub">${it.sub||""}</div></div><span class="chev">▾</span>`;
+  }
+  function renderList(){
+    const q = search.value.trim().toLowerCase();
+    shown = items().filter(i => !q || (i.title+" "+(i.sub||"")+" "+(i.group||"")).toLowerCase().includes(q));
+    let html = "", last = null;
+    shown.forEach((it,idx)=>{
+      if (it.group && it.group!==last){ html += `<div class="dd-group">${it.group}</div>`; last = it.group; }
+      html += row(it, "dd-item" + (it.key===getSelected()?" sel":"") + (idx===hl?" hl":""));
+    });
+    list.innerHTML = html || `<div class="dd-empty">Nothing found. Try “Other — balanced”.</div>`;
+  }
+  function open(){ el.classList.add("open"); search.value=""; hl = -1; renderList(); setTimeout(()=>search.focus(),0);
+    const s = list.querySelector(".sel"); if (s) s.scrollIntoView({block:"nearest"}); }
+  function close(){ el.classList.remove("open"); }
+  function pick(key){ close(); onPick(key); renderBtn(); btn.focus(); }
+  btn.onclick = () => el.classList.contains("open") ? close() : open();
+  list.onclick = e => { const d = e.target.closest(".dd-item"); if (d) pick(d.dataset.key); };
+  search.oninput = () => { hl = 0; renderList(); };
+  el.addEventListener("keydown", e => {
+    if (!el.classList.contains("open")) { if (e.key==="ArrowDown"){ e.preventDefault(); open(); } return; }
+    if (e.key==="Escape"){ close(); btn.focus(); }
+    else if (e.key==="ArrowDown"){ e.preventDefault(); hl = Math.min(shown.length-1, hl+1); renderList(); list.querySelector(".hl")?.scrollIntoView({block:"nearest"}); }
+    else if (e.key==="ArrowUp"){ e.preventDefault(); hl = Math.max(0, hl-1); renderList(); list.querySelector(".hl")?.scrollIntoView({block:"nearest"}); }
+    else if (e.key==="Enter" && shown[hl]){ e.preventDefault(); pick(shown[hl].key); }
+  });
+  document.addEventListener("click", e => { if (!el.contains(e.target)) close(); });
+  return { refresh: renderBtn };
+}
+
+const state = {game:"cs2", goals:new Set(["steps","gunfight"]), headset:"neutral", intensity:100, corr:100};
+const CORR = {100:{name:"Full",hint:"measured correction"},50:{name:"Half",hint:"if Full sounds too sharp"},0:{name:"Off",hint:"no headset correction"}};
+
+function readHash(){
+  try{
+    const p = new URLSearchParams(location.hash.slice(1));
+    if (GAMES[p.get("g")]) state.game = p.get("g");
+    if (p.has("o")) state.goals = new Set(p.get("o").split(",").filter(k=>GOALS[k]));
+    if (HEADSETS[p.get("h")]) state.headset = p.get("h");
+    const i = parseInt(p.get("i"),10); if (i>=25 && i<=150) state.intensity = i;
+    const c = parseInt(p.get("c"),10); if (CORR[c]) state.corr = c;
+  }catch(e){}
+}
+function writeHash(){
+  try{
+    const p = new URLSearchParams({g:state.game, o:[...state.goals].join(","), h:state.headset, i:state.intensity, c:state.corr});
+    history.replaceState(null,"","#"+p.toString());
+  }catch(e){}
+}
+
+function compute(){
+  const k = state.intensity/100;
+  return BANDS.map((_,b)=>{
+    let v = GAMES[state.game].curve[b];
+    state.goals.forEach(g=> v += GOALS[g].curve[b]);
+    v = v*k + HEADSETS[state.headset].curve[b]*state.corr/100;
+    v = Math.max(-10, Math.min(10, v));
+    return Math.round(v*2)/2;
+  });
+}
+function preampFor(vals){
+  const max = Math.max(0, ...vals);
+  return -(Math.ceil(max) + (max>0 ? 1 : 0));
+}
+
+function chip(container, key, obj, isOn, onClick){
+  const b = document.createElement("button");
+  b.className = "chip" + (isOn?" on":"");
+  b.innerHTML = obj.name + (obj.hint?`<small>${obj.hint}</small>`:"");
+  b.onclick = onClick;
+  container.appendChild(b);
+}
+function renderChips(){
+  const o = document.getElementById("goals"); o.innerHTML="";
+  Object.entries(GOALS).forEach(([k,v])=>chip(o,k,v,state.goals.has(k),()=>{state.goals.has(k)?state.goals.delete(k):state.goals.add(k);update();}));
+  const c = document.getElementById("corr"); c.innerHTML="";
+  [100,50,0].forEach(k=>chip(c,k,CORR[k],state.corr===k,()=>{state.corr=k;update();}));
+  c.style.display = HEADSETS[state.headset].src ? "" : "none";
+}
+
+function renderGraph(vals){
+  const W=900,H=260,L=40,R=20,T=16,B=30, min=-10,max=10;
+  const x = i => L + i*(W-L-R)/(BANDS.length-1);
+  const y = v => T + (max-v)*(H-T-B)/(max-min);
+  let s = "";
+  for (let v=-9; v<=9; v+=3){
+    s += `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="${v===0?'#3d4659':'#222836'}" stroke-width="${v===0?1.5:1}"/>`;
+    s += `<text x="${L-8}" y="${y(v)+4}" fill="#8b94a7" font-size="11" text-anchor="end">${v>0?'+':''}${v}</text>`;
+  }
+  LABELS.forEach((l,i)=> s += `<text x="${x(i)}" y="${H-8}" fill="#8b94a7" font-size="11" text-anchor="middle">${l}</text>`);
+  // smooth path (Catmull-Rom → Bezier)
+  const pts = vals.map((v,i)=>[x(i),y(v)]);
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i=0;i<pts.length-1;i++){
+    const p0=pts[i-1]||pts[i], p1=pts[i], p2=pts[i+1], p3=pts[i+2]||p2;
+    const c1=[p1[0]+(p2[0]-p0[0])/6, p1[1]+(p2[1]-p0[1])/6];
+    const c2=[p2[0]-(p3[0]-p1[0])/6, p2[1]-(p3[1]-p1[1])/6];
+    d += ` C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p2[0]},${p2[1]}`;
+  }
+  s += `<path d="${d} L${x(9)},${y(0)} L${x(0)},${y(0)} Z" fill="rgba(56,225,164,.10)"/>`;
+  s += `<path d="${d}" fill="none" stroke="#38e1a4" stroke-width="2.5"/>`;
+  pts.forEach(p=> s += `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#0d0f14" stroke="#38e1a4" stroke-width="2"/>`);
+  document.getElementById("graph").innerHTML = s;
+}
+
+function fmt(v){ return (v>0?"+":"") + v + " dB"; }
+
+function presetName(){
+  const goals = [...state.goals].map(g=>GOALS[g].name).join(" + ") || "base";
+  const corr = HEADSETS[state.headset].src && state.corr!==100 ? ` (correction ${CORR[state.corr].name})` : "";
+  return `${GAMES[state.game].name} — ${goals} — ${HEADSETS[state.headset].name}${corr} — ${state.intensity}%`;
+}
+function graphicLine(vals){
+  return "GraphicEQ: " + BANDS.map((f,i)=>`${f} ${vals[i]}`).join("; ");
+}
+function apoFile(vals){
+  return `# GameEQ preset: ${presetName()}\n# Put in C:\\Program Files\\EqualizerAPO\\config\\ and add "Include: gameeq.txt" to config.txt\n\nPreamp: ${preampFor(vals)} dB\n${graphicLine(vals)}\n`;
+}
+
+function renderGameInfo(){
+  const m = GAME_META[state.game], box = document.getElementById("gameInfo");
+  box.style.setProperty("--g1", m.c2);
+  box.innerHTML = `<div class="thumb" style="width:48px;height:48px">${gameArt(state.game)}</div>
+    <div><div class="dd-title">${GAMES[state.game].name} <span class="badge">${m.genre}</span></div>
+    <div class="listen">${m.listen.map(x=>`<span>${x}</span>`).join("")}</div><p>${m.tip}</p></div>`;
+}
+
+const gameDD = makeDropdown(document.getElementById("gameDD"), {
+  placeholder: "Search games…",
+  getSelected: () => state.game,
+  items: () => Object.keys(GAMES).map(k => ({key:k, title:GAMES[k].name, sub:GAME_META[k].genre + " · recommended: " + GAME_META[k].rec.map(g=>GOALS[g].name).join(" + "),
+                                            group:GAME_META[k].genre, thumb:gameArt(k)})),
+  onPick: k => { state.game = k; state.goals = new Set(GAME_META[k].rec); update(); toast("Recommended settings for " + GAMES[k].name); },
+});
+const hsDD = makeDropdown(document.getElementById("hsDD"), {
+  placeholder: "Search headsets… (e.g. cloud, blackshark, nova)",
+  getSelected: () => state.headset,
+  items: () => Object.keys(HEADSETS).sort((x,y)=>{ const o=Object.keys(BRANDS);
+      return o.indexOf((HS_LOOK[x]||{brand:"other"}).brand) - o.indexOf((HS_LOOK[y]||{brand:"other"}).brand); }).map(k => {
+    const h = HEADSETS[k], L = HS_LOOK[k] || {brand:"other"};
+    const generic = ["neutral","bright","bassy"].includes(k);
+    return {key:k, title:h.name, group:BRANDS[L.brand].name, thumb:headsetThumb(k),
+            sub:[h.hint, L.wireless?"wireless":"", generic? "no measurement" : h.src ? "measured: "+h.src : ""].filter(Boolean).join(" · "),
+            badge: h.src ? '<span class="badge ok">measured</span>' : (generic ? "" : '<span class="badge">not measured</span>')};
+  }),
+  onPick: k => { state.headset = k; update(); },
+});
+
+function update(){
+  const vals = compute();
+  renderChips(); renderGraph(vals); renderGameInfo(); gameDD.refresh(); hsDD.refresh();
+  if (typeof SoundTest !== 'undefined') SoundTest.onUpdate();
+  document.getElementById("thead").innerHTML = LABELS.map(l=>`<th>${l}</th>`).join("");
+  document.getElementById("tbody").innerHTML = vals.map(v=>`<td class="${v>0?'pos':v<0?'neg':''}">${v>0?'+':''}${v}</td>`).join("");
+  const hs = HEADSETS[state.headset];
+  document.getElementById("appTip").innerHTML =
+    (hs.src ? `<b>Measured:</b> correction from lab measurements by ${hs.src}, via <a href="https://github.com/jaakkopasanen/AutoEq" style="color:var(--accent2)">AutoEq</a>.<br>`
+            : (["neutral","bright","bassy"].includes(state.headset) ? "" : "<b>Not measured yet:</b> no lab data for this model, so no headset correction is applied.<br>")) +
+    "<b>Where to enter it:</b> " + hs.app +
+    " Only use one EQ at a time (app <i>or</i> Equalizer APO, not both) and set the app's other presets to flat.";
+  document.getElementById("intVal").textContent = state.intensity + "%";
+  document.getElementById("intensity").value = state.intensity;
+  document.getElementById("preampNote").textContent = `Preamp / master: ${preampFor(vals)} dB (stops distortion from the boosts). Preset: ${presetName()}`;
+  writeHash();
+}
+
+function toast(msg){
+  const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),1600);
+}
+async function copy(text,msg){
+  try{ await navigator.clipboard.writeText(text); toast(msg); }
+  catch(e){ prompt("Copy this:", text); }
+}
+
+document.getElementById("intensity").oninput = e => { state.intensity = +e.target.value; update(); };
+document.getElementById("reset").onclick = () => { state.game="cs2"; state.goals=new Set(["steps","gunfight"]); state.headset="neutral"; state.intensity=100; state.corr=100; update(); };
+document.getElementById("dl").onclick = () => {
+  const blob = new Blob([apoFile(compute())],{type:"text/plain"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "gameeq.txt"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+const HELPER_URL = "https://github.com/Hrgacro/game-eq/releases/latest/download/GameEQHelper.exe";
+document.querySelectorAll("#helperLink,.helperLink").forEach(a => a.href = HELPER_URL);
+function applyLink(vals){
+  const q = "v=" + vals.join(",") + "&p=" + preampFor(vals) + "&n=" + encodeURIComponent(presetName());
+  return "gameeq://apply?" + q;
+}
+document.getElementById("apply").onclick = () => {
+  location.href = applyLink(compute());
+  const n = document.getElementById("applyNote");
+  n.style.color = "var(--warn)";
+  setTimeout(()=>{ n.style.color = ""; }, 4000);
+};
+document.getElementById("copyLine").onclick = () => copy(graphicLine(compute()), "GraphicEQ line copied");
+document.getElementById("copyTable").onclick = () => {
+  const v = compute();
+  copy(presetName()+"\n"+LABELS.map((l,i)=>`${l} Hz: ${fmt(v[i])}`).join("\n")+`\nPreamp: ${preampFor(v)} dB`, "Values copied");
+};
+document.getElementById("share").onclick = () => copy(location.href, "Share link copied");
+
+// ================= Sound test: synthesized game scenes played through the EQ =================
+const SoundTest = (() => {
+  let ctx, input, wet, dry, pre, master, eq = [], noise, playing = false, nextLoop = 0, timer = null, raf = null;
+  let events = [], sceneKey = null, mediaSrc = null, eqOn = true, mode = "normal", comp, compOut, compOn = false, lim;
+  const LOOP = 12;
+  const COLORS = {step:"#38e1a4", gun:"#ff6b4a", dink:"#ffd166", reload:"#4aa8ff", beep:"#ff4d6d", boom:"#ff9f1c",
+                  vehicle:"#c77dff", build:"#c9a85b", loot:"#7bdff2", ability:"#b388ff", ping:"#4aa8ff", ball:"#f1f1f1",
+                  boost:"#ff9f1c", whistle:"#ffd166", crowd:"#8b94a7", music:"#e86fd2"};
+  const LABEL = {step:"Footsteps", gun:"Gunshots", dink:"Headshot sound", reload:"Reload", beep:"Bomb / spike beeps", boom:"Explosion",
+                 vehicle:"Vehicle", build:"Building", loot:"Loot / chest", ability:"Ability", ping:"Ping", ball:"Ball hits",
+                 boost:"Boost", whistle:"Whistle", crowd:"Crowd", music:"Music"};
+
+  function init(){
+    if (ctx) return;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    input = ctx.createGain(); wet = ctx.createGain(); dry = ctx.createGain(); pre = ctx.createGain(); master = ctx.createGain();
+    let node = input;
+    eq = BANDS.map(f => { const b = ctx.createBiquadFilter(); b.type = "peaking"; b.frequency.value = f; b.Q.value = 1.41; node.connect(b); node = b; return b; });
+    node.connect(pre); pre.connect(wet); wet.connect(master);
+    input.connect(dry); dry.connect(master);
+    lim = ctx.createDynamicsCompressor(); lim.threshold.value = -6; lim.knee.value = 4; lim.ratio.value = 12; lim.attack.value = 0.002; lim.release.value = 0.15;
+    comp = ctx.createDynamicsCompressor(); comp.threshold.value = -32; comp.knee.value = 8; comp.ratio.value = 8; comp.attack.value = 0.003; comp.release.value = 0.2;
+    compOut = ctx.createGain(); compOut.gain.value = 0.4; comp.connect(compOut);
+    master.connect(lim); compOut.connect(lim); lim.connect(ctx.destination);
+    setComp();
+    const len = ctx.sampleRate * 2; noise = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random()*2-1;
+    setVolume(); applyEQ();
+  }
+
+  // ---------- EQ + level-matched A/B ----------
+  function applyEQ(){
+    if (!ctx) return;
+    const vals = compute(), p = preampFor(vals), t = ctx.currentTime;
+    eq.forEach((b,i) => b.gain.setTargetAtTime(vals[i], t, 0.03));
+    pre.gain.setTargetAtTime(Math.pow(10, p/20), t, 0.03);
+    // match loudness: estimate the EQ's average level change in the 250 Hz–4 kHz range
+    const mid = (vals[3]+vals[4]+vals[5]+vals[6]+vals[7])/5;
+    const dryGain = Math.pow(10, (p + mid)/20);
+    wet.gain.setTargetAtTime(eqOn ? 1 : 0, t, 0.02);
+    dry.gain.setTargetAtTime(eqOn ? 0 : dryGain, t, 0.02);
+  }
+  function setComp(){
+    if (!ctx) return;
+    master.disconnect();
+    master.connect(compOn ? comp : lim);
+  }
+  function setVolume(){ if (ctx) master.gain.setTargetAtTime(Math.pow(+document.getElementById("stVol").value/100, 2)*4.5, ctx.currentTime, 0.03); }
+
+  // ---------- building blocks ----------
+  function panner(x, z){
+    const p = ctx.createPanner(); p.panningModel = "HRTF"; p.distanceModel = "inverse"; p.refDistance = 1.5; p.rolloffFactor = 0.9;
+    if (p.positionX){ p.positionX.value = x; p.positionY.value = 0; p.positionZ.value = z; } else p.setPosition(x, 0, z);
+    p.connect(input); return p;
+  }
+  function env(g, t, a, d, peak){ g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t+a); g.gain.exponentialRampToValueAtTime(0.0001, t+a+d); }
+  function nz(t, dur, out, filt, f, q, a, d, peak, rate=1){
+    const s = ctx.createBufferSource(); s.buffer = noise; s.playbackRate.value = rate;
+    const fl = ctx.createBiquadFilter(); fl.type = filt; fl.frequency.value = f; fl.Q.value = q;
+    const g = ctx.createGain(); env(g, t, a, d, peak);
+    s.connect(fl); fl.connect(g); g.connect(out); s.start(t, Math.random()*1.5); s.stop(t + a + d + 0.05);
+    return fl;
+  }
+  function tone(t, freq, out, type, a, d, peak){
+    const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq;
+    const g = ctx.createGain(); env(g, t, a, d, peak); o.connect(g); g.connect(out); o.start(t); o.stop(t + a + d + 0.05); return o;
+  }
+
+  // ---------- sounds ----------
+  const S = {
+    step(t, x, z, heavy){ const o = panner(x, z);
+      nz(t, 0, o, "bandpass", 1700 + Math.random()*600, 0.9, 0.002, 0.08, heavy?0.35:0.5);
+      nz(t, 0, o, "lowpass", heavy?180:260, 0.7, 0.003, heavy?0.11:0.07, heavy?1.1:0.75); },
+    gun(t, x, z, far){ const o = panner(x, z); const out = far ? (()=>{ const lp = ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value = 2200; lp.connect(o); return lp; })() : o;
+      nz(t, 0, out, "highpass", 1800, 0.7, 0.001, far?0.25:0.1, far?0.5:1.0);
+      nz(t, 0, out, "lowpass", 900, 0.7, 0.002, far?0.9:0.35, far?0.7:1.0);
+      tone(t, 55, out, "sine", 0.001, 0.25, far?0.4:1.0); },
+    dink(t, x, z){ const o = panner(x, z);
+      [3150, 4720, 6890].forEach((f,i) => tone(t, f, o, "sine", 0.001, 0.4 - i*0.08, 0.22));
+      nz(t, 0, o, "highpass", 4500, 0.7, 0.001, 0.02, 0.5); },
+    reload(t, x, z){ const o = panner(x, z);
+      [0, 0.28, 0.62].forEach((dt,i) => nz(t+dt, 0, o, "bandpass", i===1?1400:2600, 3, 0.001, 0.035, 0.7)); },
+    beep(t, x, z){ const o = panner(x, z); tone(t, 1250, o, "sine", 0.004, 0.11, 0.35); },
+    boom(t, x, z){ const o = panner(x, z);
+      nz(t, 0, o, "lowpass", 380, 0.7, 0.004, 1.6, 1.3, 0.6); tone(t, 38, o, "sine", 0.004, 0.9, 1.0);
+      nz(t, 0, o, "highpass", 2500, 0.7, 0.002, 0.25, 0.25); },
+    vehicle(t, x1, z1, x2, z2, dur){ const p = ctx.createPanner(); p.panningModel = "HRTF"; p.refDistance = 3; p.connect(input);
+      p.positionX.setValueAtTime(x1, t); p.positionZ.setValueAtTime(z1, t); p.positionX.linearRampToValueAtTime(x2, t+dur); p.positionZ.linearRampToValueAtTime(z2, t+dur);
+      const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(62, t); o.frequency.linearRampToValueAtTime(78, t+dur*0.5); o.frequency.linearRampToValueAtTime(66, t+dur);
+      const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 520;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.5, t+0.8); g.gain.setValueAtTime(0.5, t+dur-0.8); g.gain.linearRampToValueAtTime(0.0001, t+dur);
+      o.connect(lp); lp.connect(g); g.connect(p); o.start(t); o.stop(t+dur+0.1); },
+    build(t, x, z){ const o = panner(x, z); nz(t, 0, o, "bandpass", 850, 4, 0.001, 0.09, 1.0); tone(t, 170, o, "triangle", 0.001, 0.07, 0.5); },
+    loot(t, x, z){ const o = panner(x, z); [1980, 2490, 2960, 3720].forEach((f,i) => tone(t + i*0.07, f, o, "sine", 0.004, 0.35, 0.12)); },
+    ability(t, x, z){ const o = panner(x, z); const fl = nz(t, 0, o, "bandpass", 400, 2, 0.15, 0.4, 0.8);
+      fl.frequency.setValueAtTime(400, t); fl.frequency.exponentialRampToValueAtTime(3200, t+0.5); },
+    ping(t, x, z){ const o = panner(x, z); tone(t, 1480, o, "sine", 0.003, 0.3, 0.25); tone(t+0.09, 2220, o, "sine", 0.003, 0.3, 0.2); },
+    ball(t, x, z){ const o = panner(x, z); tone(t, 115, o, "sine", 0.001, 0.16, 1.0); nz(t, 0, o, "bandpass", 1300, 1, 0.001, 0.05, 0.8); },
+    boost(t, x, z){ const o = panner(x, z); const fl = nz(t, 0, o, "highpass", 800, 0.7, 0.06, 0.9, 0.45);
+      fl.frequency.setValueAtTime(800, t); fl.frequency.exponentialRampToValueAtTime(3500, t+0.9); },
+    whistle(t, x, z){ const o = panner(x, z); const osc = tone(t, 2900, o, "sine", 0.01, 0.6, 0.3);
+      const lfo = ctx.createOscillator(); lfo.frequency.value = 22; const lg = ctx.createGain(); lg.gain.value = 60; lfo.connect(lg); lg.connect(osc.frequency); lfo.start(t); lfo.stop(t+0.7); },
+    crowd(t, dur){ [-6, 6].forEach(x => { const o = panner(x, -2);
+      const s = ctx.createBufferSource(); s.buffer = noise; s.loop = true;
+      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 700; bp.Q.value = 0.5;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.35, t+1); g.gain.setValueAtTime(0.35, t+dur-1); g.gain.linearRampToValueAtTime(0.0001, t+dur);
+      const lfo = ctx.createOscillator(); lfo.frequency.value = 0.3 + Math.random()*0.3; const lg = ctx.createGain(); lg.gain.value = 0.12; lfo.connect(lg); lg.connect(g.gain);
+      s.connect(bp); bp.connect(g); g.connect(o); s.start(t, Math.random()); s.stop(t+dur); lfo.start(t); lfo.stop(t+dur); }); },
+    music(t){ const o = panner(0, -2); // simple original beat
+      for (let b = 0; b < 24; b++){ const bt = t + b*0.5;
+        tone(bt, 55, o, "sine", 0.002, 0.3, b%2===0 ? 1.0 : 0.0001);
+        if (b%2===1) nz(bt, 0, o, "bandpass", 1800, 0.8, 0.001, 0.15, 0.6);
+        nz(bt+0.25, 0, o, "highpass", 7000, 0.7, 0.001, 0.04, 0.35);
+        tone(bt, [110, 110, 131, 98][Math.floor(b/6)%4], o, "triangle", 0.01, 0.42, 0.25); } },
+  };
+
+  // ---------- scenes (x = right, z = front is negative; meters) ----------
+  function walk(list, t0, from, to, n, dt, heavy){
+    for (let i = 0; i < n; i++){ const k = i/(n-1); list.push({t:t0+i*dt, type:"step", x:from[0]+(to[0]-from[0])*k, z:from[1]+(to[1]-from[1])*k, heavy}); }
+  }
+  const SCENES = {
+    cs2(){ const e = []; walk(e, 0.4, [-6, 6], [5, -5], 18, 0.38);
+      e.push({t:3.0, type:"reload", x:-4, z:-3});
+      [5.0, 5.12, 5.24].forEach(t => e.push({t, type:"gun", x:7, z:-9}));
+      e.push({t:5.45, type:"dink", x:3, z:-6});
+      for (let t = 7; t < 11.6; t += 0.9) e.push({t, type:"beep", x:0, z:-8});
+      walk(e, 8, [8, 2], [3, 1], 8, 0.42); return e; },
+    valorant(){ const e = []; walk(e, 0.4, [6, 5], [-4, -4], 16, 0.4);
+      e.push({t:3.2, type:"ability", x:-5, z:-4});
+      [5.2, 5.34].forEach(t => e.push({t, type:"gun", x:6, z:-8})); e.push({t:5.5, type:"dink", x:2, z:-5});
+      for (let t = 7.5; t < 11.6; t += 0.7) e.push({t, type:"beep", x:-1, z:-7});
+      walk(e, 8.2, [-7, 3], [-2, 2], 7, 0.4); return e; },
+    pubg(){ const e = []; [0.6, 1.4, 2.1].forEach(t => e.push({t, type:"gun", x:28, z:-40, far:1}));
+      e.push({t:3, type:"vehicle", x:-25, z:-14, x2:25, z2:-14, dur:5});
+      walk(e, 8.2, [0, 5], [-3, 2], 8, 0.45, true);
+      e.push({t:10.6, type:"gun", x:-6, z:-4}); return e; },
+    fortnite(){ const e = []; walk(e, 0.3, [-6, -6], [-2, -2], 9, 0.36);
+      [3.2, 3.45, 3.7, 3.95].forEach(t => e.push({t, type:"build", x:4, z:-3}));
+      e.push({t:5.6, type:"loot", x:-3, z:2}); e.push({t:6.6, type:"loot", x:-3, z:2});
+      walk(e, 7, [6, 4], [2, 1], 7, 0.32);
+      e.push({t:9.6, type:"gun", x:2, z:-2}); e.push({t:10.6, type:"boom", x:-8, z:-10}); return e; },
+    apex(){ const e = []; walk(e, 0.4, [5, 6], [-5, -2], 15, 0.34);
+      e.push({t:3, type:"ability", x:6, z:-6});
+      [5, 5.08, 5.16, 5.24, 5.32].forEach(t => e.push({t, type:"gun", x:-7, z:-9})); e.push({t:5.5, type:"dink", x:-3, z:-5});
+      e.push({t:8, type:"boom", x:10, z:-12}); walk(e, 8.6, [-6, 4], [-1, 1], 7, 0.34); return e; },
+    cod(){ const e = []; walk(e, 0.3, [-7, 0], [6, -3], 20, 0.28);
+      [3, 3.08, 3.16, 3.24, 3.32, 3.4].forEach(t => e.push({t, type:"gun", x:8, z:-6}));
+      e.push({t:4.6, type:"reload", x:-3, z:-2}); e.push({t:6.4, type:"boom", x:-9, z:-12});
+      walk(e, 8, [4, 6], [0, 2], 10, 0.28); return e; },
+    lol(){ const e = []; e.push({t:0.5, type:"ping", x:-4, z:-6}); e.push({t:1.6, type:"ability", x:3, z:-4}); e.push({t:2.4, type:"ability", x:-2, z:-3});
+      e.push({t:4, type:"ping", x:5, z:-5}); e.push({t:4.4, type:"ping", x:5, z:-5});
+      e.push({t:6.4, type:"boom", x:0, z:-10}); e.push({t:8.4, type:"ability", x:-4, z:-2}); e.push({t:9.6, type:"ping", x:2, z:-7}); return e; },
+    rl(){ const e = []; e.push({t:0.2, type:"vehicle", x:-12, z:6, x2:10, z2:-8, dur:3.5});
+      [1.1, 3.8, 6.2, 9.4].forEach((t,i) => e.push({t, type:"ball", x:[3,-4,5,-2][i], z:[-6,-3,-8,-5][i]}));
+      e.push({t:2.4, type:"boost", x:-3, z:3}); e.push({t:7.2, type:"boost", x:5, z:2});
+      e.push({t:6.8, type:"vehicle", x:12, z:4, x2:-10, z2:-6, dur:3.5}); return e; },
+    fc(){ const e = []; e.push({t:0.05, type:"crowd", x:0, z:-4, dur:11.9});
+      [1.2, 2.6, 4.4, 7.8].forEach((t,i) => e.push({t, type:"ball", x:[-3,1,4,-1][i], z:[-6,-8,-5,-9][i]}));
+      e.push({t:6, type:"whistle", x:0, z:-10}); e.push({t:10.2, type:"whistle", x:0, z:-10}); return e; },
+    flat(){ return [{t:0.05, type:"music", x:0, z:-2}]; },
+  };
+
+  const SHOOTERS = ["cs2","valorant","pubg","fortnite","apex","cod"];
+  // Gunfight: an enemy sneaks up from behind-right while shots ring out in front. Can you track the steps?
+  function gunfightScene(game){
+    const e = [];
+    walk(e, 0.6, [7, 8], [1.5, 1.5], 26, 0.4, game === "pubg");
+    const burst = (t, x, z, n, gap) => { for (let i = 0; i < n; i++) e.push({t: t + i*gap, type:"gun", x, z, far: Math.hypot(x,z) > 20 ? 1 : 0}); };
+    const gap = game === "cs2" || game === "valorant" ? 0.11 : 0.085;
+    burst(1.2, -6, -9, 5, gap); burst(2.6, 5, -10, 4, gap); burst(4.0, -4, -7, 6, gap);
+    burst(5.6, 6, -8, 5, gap); burst(7.2, -7, -10, 6, gap); burst(8.8, 3, -9, 4, gap);
+    if (game === "cs2" || game === "valorant" || game === "apex") e.push({t:4.7, type:"dink", x:-4, z:-7});
+    e.push({t:9.8, type:"reload", x:-5, z:-6});
+    if (game === "fortnite" || game === "apex" || game === "cod") e.push({t:6.6, type:"boom", x:9, z:-12});
+    return e;
+  }
+  function sceneEvents(){ return (mode === "fight" && SHOOTERS.includes(sceneKey)) ? gunfightScene(sceneKey) : SCENES[sceneKey](); }
+
+  function schedule(t0){
+    const list = sceneEvents().map(ev => ({...ev, t: t0 + ev.t}));
+    list.forEach(ev => {
+      const {t, x, z} = ev;
+      if (ev.type === "step") S.step(t, x, z, ev.heavy);
+      else if (ev.type === "gun") S.gun(t, x, z, ev.far);
+      else if (ev.type === "vehicle") S.vehicle(t, x, z, ev.x2, ev.z2, ev.dur);
+      else if (ev.type === "crowd") S.crowd(t, ev.dur);
+      else if (ev.type === "music") S.music(t);
+      else S[ev.type](t, x, z);
+    });
+    events = events.filter(ev => ev.t > ctx.currentTime - 3).concat(list);
+  }
+  function tick(){
+    if (!playing) return;
+    if (ctx.currentTime > nextLoop - 1.5){ schedule(nextLoop); nextLoop += LOOP; }
+  }
+
+  // ---------- radar drawing ----------
+  function draw(){
+    const cv = document.getElementById("stCanvas"), g = cv.getContext("2d"), W = cv.width, H = cv.height, cx = W/2, cy = H/2, sc = 14;
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = "#232a38"; g.lineWidth = 1;
+    [40, 90, 140].forEach(r => { g.beginPath(); g.arc(cx, cy, r, 0, Math.PI*2); g.stroke(); });
+    g.beginPath(); g.moveTo(cx, 10); g.lineTo(cx, H-10); g.moveTo(10, cy); g.lineTo(W-10, cy); g.stroke();
+    g.fillStyle = "#5b6475"; g.font = "11px system-ui"; g.textAlign = "center";
+    g.fillText("FRONT", cx, 18); g.fillText("BEHIND", cx, H-8); g.fillText("L", 14, cy-6); g.fillText("R", W-14, cy-6);
+    // you
+    g.fillStyle = "#38e1a4"; g.beginPath(); g.arc(cx, cy, 7, 0, Math.PI*2); g.fill();
+    g.fillStyle = "#0d0f14"; g.beginPath(); g.moveTo(cx, cy-5); g.lineTo(cx-3, cy+2); g.lineTo(cx+3, cy+2); g.fill();
+    if (ctx && playing){
+      const now = ctx.currentTime;
+      events.forEach(ev => {
+        let x = ev.x, z = ev.z;
+        if (ev.type === "vehicle"){ const k = Math.min(1, Math.max(0, (now-ev.t)/ev.dur)); x = ev.x + (ev.x2-ev.x)*k; z = ev.z + (ev.z2-ev.z)*k; if (now < ev.t || now > ev.t+ev.dur) return; }
+        const age = now - ev.t; const life = ev.type === "step" ? 2.2 : (ev.dur || 1.1);
+        if (age < 0 || age > life) return;
+        let px = cx + Math.max(-11.5, Math.min(11.5, x))*sc, py = cy + Math.max(-11.5, Math.min(11.5, z))*sc;
+        if (Math.hypot(x, z) > 12){ const a = Math.atan2(z, x); px = cx + Math.cos(a)*160; py = cy + Math.sin(a)*160; }
+        const col = COLORS[ev.type], fade = 1 - age/life;
+        g.globalAlpha = Math.max(0, fade);
+        if (ev.type === "step"){ g.fillStyle = col; g.beginPath(); g.ellipse(px, py, 3, 5, 0, 0, Math.PI*2); g.fill(); }
+        else {
+          if (age < 0.6){ g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); g.arc(px, py, 6 + age*50, 0, Math.PI*2); g.stroke(); }
+          g.fillStyle = col; g.beginPath(); g.arc(px, py, 5, 0, Math.PI*2); g.fill();
+          g.font = "11px system-ui"; g.fillText(LABEL[ev.type], px, py - 10);
+        }
+        g.globalAlpha = 1;
+      });
+    } else {
+      g.fillStyle = "#8b94a7"; g.font = "13px system-ui"; g.fillText("Press Play to start the scene", cx, cy + 34);
+    }
+    raf = requestAnimationFrame(draw);
+  }
+
+  function renderLegend(){
+    const shooter = SHOOTERS.includes(state.game);
+    document.getElementById("stModeSeg").style.display = shooter ? "" : "none";
+    const fight = mode === "fight" && shooter;
+    const types = [...new Set((fight ? gunfightScene(state.game) : SCENES[state.game]()).map(e => e.type))];
+    document.getElementById("stScene").textContent = "Scene: " + GAMES[state.game].name + (fight ? " — Gunfight (find the enemy sneaking up behind you)" : "");
+    document.getElementById("stLegend").innerHTML = types.map(t => `<span><i style="background:${COLORS[t]}"></i>${LABEL[t]}</span>`).join("");
+  }
+
+  function start(){
+    init(); ctx.resume(); stopClip();
+    sceneKey = state.game; events = []; playing = true;
+    nextLoop = ctx.currentTime + 0.15; tick();
+    clearInterval(timer); timer = setInterval(tick, 200);
+    document.getElementById("stPlay").textContent = "■ Stop";
+  }
+  function stop(){
+    playing = false; clearInterval(timer);
+    if (ctx){ // cut everything already scheduled
+      const old = input; input = ctx.createGain();
+      old.disconnect(); input.connect(eq[0]); input.connect(dry);
+    }
+    events = [];
+    document.getElementById("stPlay").textContent = "▶ Play scene";
+  }
+  function stopClip(){ const v = document.getElementById("stVideo"); if (!v.paused) v.pause(); }
+
+  function setAB(on){
+    eqOn = on;
+    document.getElementById("stOn").classList.toggle("on", on);
+    document.getElementById("stOff").classList.toggle("on", !on);
+    applyEQ();
+  }
+
+  function useFile(file){
+    if (!file) return;
+    init(); ctx.resume(); stop();
+    const v = document.getElementById("stVideo");
+    v.src = URL.createObjectURL(file); v.style.display = "block"; v.style.maxHeight = file.type.startsWith("audio") ? "54px" : "";
+    if (!mediaSrc){ mediaSrc = ctx.createMediaElementSource(v); }
+    mediaSrc.disconnect(); mediaSrc.connect(eq[0]); mediaSrc.connect(dry);
+    v.play().catch(()=>{});
+  }
+
+  function wire(){
+    document.getElementById("stPlay").onclick = () => playing ? stop() : start();
+    document.getElementById("stOn").onclick = () => setAB(true);
+    document.getElementById("stOff").onclick = () => setAB(false);
+    const setMode = m => { mode = m; document.getElementById("stNormal").classList.toggle("on", m==="normal"); document.getElementById("stFight").classList.toggle("on", m==="fight");
+      renderLegend(); if (playing){ stop(); start(); } };
+    document.getElementById("stNormal").onclick = () => setMode("normal");
+    document.getElementById("stFight").onclick = () => setMode("fight");
+    document.getElementById("stComp").onchange = e => { compOn = e.target.checked; setComp(); };
+    document.getElementById("stVol").oninput = setVolume;
+    document.getElementById("stFile").onchange = e => useFile(e.target.files[0]);
+    document.getElementById("stVideo").onplay = () => { if (playing) stop(); };
+    renderLegend(); draw();
+  }
+
+  return {
+    wire,
+    onUpdate(){ applyEQ(); renderLegend(); if (playing && sceneKey !== state.game) { stop(); start(); } },
+  };
+})();
+SoundTest.wire();
+
+readHash(); update();
+</script>
+</body>
+</html>

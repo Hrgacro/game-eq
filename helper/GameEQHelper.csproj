@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- .NET Framework 4.8 ships with Windows 10/11, so users don't need to install anything extra -->
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>GameEQHelper</AssemblyName>
+    <RootNamespace>GameEQ</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <Version>1.0.0</Version>
+    <Product>GameEQ Helper</Product>
+    <Description>Applies GameEQ presets to Equalizer APO</Description>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>
