@@ -393,13 +393,14 @@ function compute(){
     let v = GAMES[state.game].curve[b];
     state.goals.forEach(g=> v += GOALS[g].curve[b]);
     v = v*k + HEADSETS[state.headset].curve[b]*state.corr/100;
-    v = Math.max(-10, Math.min(10, v));
+    v = Math.max(-10, Math.min(MAX_BOOST, v));   // boosts capped so the overall volume drop stays small
     return Math.round(v*2)/2;
   });
 }
+const MAX_BOOST = 6;
 function preampFor(vals){
   const max = Math.max(0, ...vals);
-  return -(Math.ceil(max) + (max>0 ? 1 : 0));
+  return -Math.ceil(max * 2) / 2;   // exactly enough to avoid distortion, no extra margin
 }
 
 function chip(container, key, obj, isOn, onClick){
@@ -499,7 +500,10 @@ function update(){
     " Only use one EQ at a time (app <i>or</i> Equalizer APO, not both) and set the app's other presets to flat.";
   document.getElementById("intVal").textContent = state.intensity + "%";
   document.getElementById("intensity").value = state.intensity;
-  document.getElementById("preampNote").textContent = `Preamp / master: ${preampFor(vals)} dB (stops distortion from the boosts). Preset: ${presetName()}`;
+  const pa = preampFor(vals);
+  document.getElementById("preampNote").textContent = pa < 0
+    ? `Volume: ${pa} dB (lowered so the boosts can't distort). It will sound a bit quieter, so just turn your headset or Windows volume up a little. Preset: ${presetName()}`
+    : `Volume: unchanged. Preset: ${presetName()}`;
   writeHash();
 }
 

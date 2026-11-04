@@ -33,6 +33,8 @@ GameEQ: pick a game, goals (Footsteps, Gunfight clarity, Less harsh…) and your
   in HKCU\Software\GameEQ\Games from website Apply (&g=game) or tray picks during a game.
 - First real-PC test (1.0.2): Helper correctly sent Tonči to install Equalizer APO (not installed yet).
   Tonči chose: keep Equalizer APO as the engine, hidden behind the Helper (no own audio driver).
+- 5 Nov 2026: Tonči tested on his PC; works but overall sound was much quieter (preamp ~-10 dB). Fix (Helper 1.1.1 + site):
+  preamp = -max boost (no extra 1 dB), boosts capped at +6 dB (MAX_BOOST in index.html), site tells user to raise volume.
 - Not yet tested with players. Plan: 5–10 players at the venue, EQ on vs off in real CS2.
 - Tonči's own headset: HyperX Cloud Alpha 2 Wireless.
 
