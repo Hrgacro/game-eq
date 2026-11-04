@@ -32,11 +32,18 @@ jobs:
           name: GameEQHelper
           path: helper/bin/Release/net48/GameEQHelper.exe
 
+      - name: Read version
+        id: ver
+        shell: pwsh
+        run: |
+          $m = Select-String -Path helper/GameEQHelper.csproj -Pattern '<Version>([^<]+)</Version>'
+          "version=$($m.Matches[0].Groups[1].Value)" >> $env:GITHUB_OUTPUT
+
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: helper-v1.0.${{ github.run_number }}
-          name: GameEQ Helper 1.0.${{ github.run_number }}
+          tag_name: helper-v${{ steps.ver.outputs.version }}
+          name: GameEQ Helper ${{ steps.ver.outputs.version }}
           make_latest: true
           body: |
             **Download `GameEQHelper.exe` below** and run it.

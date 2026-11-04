@@ -37,5 +37,6 @@ GameEQ: pick a game, goals (Footsteps, Gunfight clarity, Less harsh…) and your
 - Tonči's own headset: HyperX Cloud Alpha 2 Wireless.
 
 ## Environment notes for Claude sessions
+- Release tag = helper-v + <Version> in helper/GameEQHelper.csproj. Bump the version when the Helper changes.
 - No .NET SDK in the cloud workspace; the Helper only compiles on GitHub Actions (windows-latest).
 - Website can be tested with Playwright (Chromium is preinstalled).
