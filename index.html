@@ -393,11 +393,11 @@ function compute(){
     let v = GAMES[state.game].curve[b];
     state.goals.forEach(g=> v += GOALS[g].curve[b]);
     v = v*k + HEADSETS[state.headset].curve[b]*state.corr/100;
-    v = Math.max(-10, Math.min(MAX_BOOST, v));   // boosts capped so the overall volume drop stays small
+    v = Math.max(MAX_CUT, Math.min(MAX_BOOST, v));   // stacked game + goals + headset can't get extreme
     return Math.round(v*2)/2;
   });
 }
-const MAX_BOOST = 6;
+const MAX_BOOST = 4, MAX_CUT = -6;   // gentle range: small volume drop, natural sound
 function preampFor(vals){
   const max = Math.max(0, ...vals);
   return -Math.ceil(max * 2) / 2;   // exactly enough to avoid distortion, no extra margin

@@ -35,6 +35,11 @@ GameEQ: pick a game, goals (Footsteps, Gunfight clarity, Less harsh…) and your
   Tonči chose: keep Equalizer APO as the engine, hidden behind the Helper (no own audio driver).
 - 5 Nov 2026: Tonči tested on his PC; works but overall sound was much quieter (preamp ~-10 dB). Fix (Helper 1.1.1 + site):
   preamp = -max boost (no extra 1 dB), boosts capped at +6 dB (MAX_BOOST in index.html), site tells user to raise volume.
+- 5 Nov 2026, still too quiet. Real cause found: Equalizer APO's default config.txt has demo lines
+  ("Preamp: -6 dB" + "Include: example.txt"); preamps add up, so the first test was ~-17 dB at 2-4 kHz.
+  Helper 1.1.2 comments those two lines out (tag "# (turned off by GameEQ) ", backup config.txt.before-gameeq,
+  restored on uninstall) and warns about other active config lines that stack. EQ range made gentler:
+  boosts max +4 dB, cuts max -6 dB (MAX_BOOST / MAX_CUT in index.html), so GameEQ's own drop is at most -4 dB.
 - Not yet tested with players. Plan: 5–10 players at the venue, EQ on vs off in real CS2.
 - Tonči's own headset: HyperX Cloud Alpha 2 Wireless.
 

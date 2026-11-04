@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Windows.Forms;
 using Microsoft.Win32;
@@ -155,9 +156,16 @@ namespace GameEQ
 
             if (active == true)
             {
-                if (!quiet) MessageBox.Show("All good ✓\n\nGameEQ is active on:\n" + name +
-                    "\n\nNo effect? On Windows 11 check Settings → System → Sound → your headset → Audio enhancements is ON.",
-                    "GameEQ — check", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (quiet) return;
+                var others = Apo.OtherActiveLines();
+                var extra = others.Length == 0 ? "" :
+                    "\n\nNote: Equalizer APO also has other settings switched on, which add on top of GameEQ " +
+                    "(volume drops and EQ stack up):\n  " + string.Join("\n  ", others.Take(6)) +
+                    "\nIf the sound is too quiet or strange, remove them in Equalizer APO's Editor or in Peace.";
+                MessageBox.Show("GameEQ is active on:\n" + name + extra +
+                    "\n\nNo effect? On Windows 11 check Settings → System → Sound → your headset → Audio enhancements is ON." +
+                    "\nAlso set your headset app's own EQ (e.g. NGENUITY) to flat, so two EQs don't stack.",
+                    "GameEQ — check", MessageBoxButtons.OK, others.Length == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
                 return;
             }
             if (active == null)

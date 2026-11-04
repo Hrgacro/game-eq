@@ -88,13 +88,13 @@ namespace GameEQ
         /// <summary>Quick presets in the tray menu (same numbers the website gives with a "Balanced" headset at 100%).</summary>
         public static readonly Preset[] BuiltIn =
         {
-            new Preset("CS2 — Footsteps",               -5, new double[]{ -5,-3, 0,-1, 0, 2, 5, 5,-2,-2 }),
-            new Preset("CS2 — Footsteps + Less harsh",  -5, new double[]{ -5,-3, 0,-1, 0, 2, 5, 4,-5,-4 }),
-            new Preset("CS2 — Footsteps + Gunfight",    -6, new double[]{ -6,-5,-2,-2, 0, 2, 6, 6,-4,-2 }),
-            new Preset("Valorant — Footsteps",          -5, new double[]{ -5,-3,-1,-1, 0, 2, 4, 5, 1,-1 }),
-            new Preset("Valorant — Footsteps + Gunfight", -6, new double[]{ -6,-5,-3,-2, 0, 2, 5, 6,-1,-1 }),
+            new Preset("CS2 — Footsteps",               -4, new double[]{ -5,-3, 0,-1, 0, 2, 4, 4,-2,-2 }),
+            new Preset("CS2 — Footsteps + Less harsh",  -4, new double[]{ -5,-3, 0,-1, 0, 2, 4, 4,-5,-4 }),
+            new Preset("CS2 — Footsteps + Gunfight",    -4, new double[]{ -6,-5,-2,-2, 0, 2, 4, 4,-4,-2 }),
+            new Preset("Valorant — Footsteps",          -4, new double[]{ -5,-3,-1,-1, 0, 2, 4, 4, 1,-1 }),
+            new Preset("Valorant — Footsteps + Gunfight", -4, new double[]{ -6,-5,-3,-2, 0, 2, 4, 4,-1,-1 }),
             new Preset("Voice clarity (Discord)",       -2, new double[]{ -1,-1,-1, 0, 1, 2, 2, 1, 0, 0 }),
-            new Preset("Music / Movies — Rich + Bass",  -6, new double[]{  6, 5, 3, 0, 0, 0, 0, 0, 1, 1 }),
+            new Preset("Music / Movies — Rich + Bass",  -4, new double[]{  4, 4, 3, 0, 0, 0, 0, 0, 1, 1 }),
             new Preset("Night mode",                    -1, new double[]{ -4,-3,-1, 0, 0, 1, 1, 0,-1,-1 }),
         };
     }

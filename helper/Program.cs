@@ -65,10 +65,12 @@ namespace GameEQ
             if (!Apo.IsSetUp)
             {
                 var r = MessageBox.Show(
-                    "First-time setup.\n\n" +
+                    "GameEQ setup.\n\n" +
                     "Windows will ask for permission once. GameEQ will only:\n" +
                     "  • create its own preset file in the Equalizer APO folder\n" +
-                    "  • add one line (Include: gameeq.txt) to Equalizer APO's config\n\n" +
+                    "  • add one line (Include: gameeq.txt) to Equalizer APO's config\n" +
+                    "  • switch off Equalizer APO's demo settings, which lower your volume\n" +
+                    "    by 6 dB and add a test EQ on top of GameEQ\n\n" +
                     "You can undo everything from the tray menu (Restore original sound).",
                     "GameEQ — setup", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
                 if (r != DialogResult.OK) return false;
