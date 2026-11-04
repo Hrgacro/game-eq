@@ -24,7 +24,8 @@ GameEQ: pick a game, goals (Footsteps, Gunfight clarity, Less harsh…) and your
 - Sound test sounds are generated in the browser, not game files.
 
 ## Status (4 Nov 2026)
-- Repo renamed from cs2-pro-coach to game-eq (done 4 Nov 2026); the old coach code is kept in branch `archive/cs2-pro-coach`.
+- Repo renamed from cs2-pro-coach to game-eq (4 Nov 2026). Tonči asked to remove the old coach project completely:
+  main history was restarted with a fresh first commit. Don't bring the coach code back.
 - Helper compiles on GitHub Actions (first run 4 Nov 2026 succeeded, Release helper-v1.0.1, 25 KB exe). Not yet run on a real PC.
 - Not yet tested with players. Plan: 5–10 players at the venue, EQ on vs off in real CS2.
 - Tonči's own headset: HyperX Cloud Alpha 2 Wireless.
