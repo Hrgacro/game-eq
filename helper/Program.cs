@@ -60,17 +60,7 @@ namespace GameEQ
         {
             RegisterLinkHandler();
 
-            if (!Apo.IsInstalled)
-            {
-                var r = MessageBox.Show(
-                    "GameEQ needs Equalizer APO (free, open source) to change your sound.\n\n" +
-                    "1. Click OK to open the download page.\n" +
-                    "2. Install it and tick your headset in the Configurator window.\n" +
-                    "3. Restart your PC, then open GameEQ Helper again.",
-                    "GameEQ — one more step", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
-                if (r == DialogResult.OK) OpenUrl(ApoDownloadUrl);
-                return false;
-            }
+            if (!Apo.IsInstalled && !Setup.InstallApo()) return false;
 
             if (!Apo.IsSetUp)
             {
@@ -90,6 +80,7 @@ namespace GameEQ
                     return false;
                 }
             }
+            Setup.CheckDevice(quiet: true);   // warns only if the EQ isn't active on the headset in use
             return true;
         }
 
@@ -109,7 +100,15 @@ namespace GameEQ
                 MessageBox.Show("Couldn't apply the preset:\n" + error, "GameEQ", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            ShowToastAndExit("EQ applied", preset.Name);
+            var note = preset.Name;
+            if (preset.Game == "flat") GameWatcher.SaveDesktop(preset);
+            else if (preset.Game != null)
+            {
+                GameWatcher.SaveForGame(preset.Game, preset);
+                var g = GameWatcher.Games.FirstOrDefault(x => x.Key == preset.Game);
+                if (g != null) note += "\nSaved for " + g.Name + ": it switches on by itself when " + g.Name + " starts.";
+            }
+            ShowToastAndExit("EQ applied", note);
         }
 
         public static bool TryApply(Preset preset, out string error)

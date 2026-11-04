@@ -15,19 +15,24 @@ Pick a **game** (CS2, Valorant, PUBG, Fortnite, Apex, CoD, LoL, Rocket League, E
 It works at the Windows audio level and never touches game files, so it's safe with VAC, Vanguard and FACEIT.
 
 ## GameEQ Helper (Windows)
-A small tray app (green bars icon next to the clock).
+A small tray app (green bars icon next to the clock). It uses [Equalizer APO](https://sourceforge.net/projects/equalizerapo/) (free, open source) as the sound engine and handles everything around it.
+
+- **Installs the sound engine for you.** If Equalizer APO is missing, it downloads the official installer, starts it, and tells you which headset to tick.
+- **Checks your headset.** It finds the device Windows is playing on and checks that the EQ is really active there. New headset, other USB port or a Windows update? It notices and offers to fix it (*Check / fix my headset*).
+- **Auto-switch per game.** CS2, Valorant, PUBG, Fortnite, Apex, League of Legends and Rocket League are detected when they start. Your saved preset for that game turns on, and your normal sound comes back when the game closes. Presets are saved when you click **Apply to my headset** on the website, or when you pick one from the tray menu while the game runs.
+- **One click from the website**, quick presets in the tray menu, EQ off, and **Restore original sound & uninstall**.
 
 1. Download and run `GameEQHelper.exe`. It isn't code-signed yet, so Windows may say *"Windows protected your PC"*. Click **More info → Run anyway**.
-2. It needs Equalizer APO (free, open source). If it's missing, the Helper opens the download page. Install it, tick your headset, restart the PC, and run the Helper again.
-3. Allow the **one-time** admin prompt.
-4. Now **Apply to my headset** on the website works instantly. Right-click the tray icon for quick presets, "Start with Windows", or **Restore original sound & uninstall**.
+2. First run: let it install Equalizer APO, tick your headset, restart if asked, then allow the **one-time** admin prompt.
+3. Pick your game on the website and click **Apply to my headset**.
 
 ### Exactly what the Helper changes
 - Creates `gameeq.txt` in the Equalizer APO config folder and lets your user account edit that one file.
 - Adds one line, `Include: gameeq.txt`, to Equalizer APO's `config.txt`.
-- Per-user registry: the `gameeq://` link handler, its own settings (`HKCU\Software\GameEQ`), and optionally "Start with Windows".
+- Per-user registry: the `gameeq://` link handler, its settings and saved presets (`HKCU\Software\GameEQ`), and optionally "Start with Windows".
+- Only if you agree: downloads and starts the official Equalizer APO installer.
 
-Nothing else. *Restore original sound & uninstall* removes all of it. Links from the website are checked and limited (each band ±12 dB, preamp can only lower volume).
+Nothing else. It only reads (never changes) Windows' audio device list to check your headset. *Restore original sound & uninstall* removes everything GameEQ added. Links from the website are checked and limited (each band ±12 dB, preamp can only lower volume).
 
 ## Project layout
 - `index.html`: the whole website (GitHub Pages)

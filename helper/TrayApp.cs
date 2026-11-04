@@ -10,6 +10,11 @@ namespace GameEQ
     {
         readonly NotifyIcon icon;
         readonly ContextMenuStrip menu = new ContextMenuStrip();
+        readonly GameWatcher games = new GameWatcher();
+        readonly Timer timer = new Timer { Interval = 3000 };
+        string lastDevice;
+        int ticks;
+        bool balloonIsFix;
 
         public TrayApp()
         {
@@ -17,8 +22,40 @@ namespace GameEQ
             icon.MouseClick += (s, e) => { if (e.Button == MouseButtons.Left) Program.OpenUrl(Program.WebsiteUrl); };
             menu.Opening += (s, e) => BuildMenu();
             BuildMenu();
+            icon.BalloonTipClicked += (s, e) => { if (balloonIsFix) Setup.CheckDevice(quiet: false); };
             icon.ShowBalloonTip(3000, "GameEQ is ready",
-                "Right-click the icon for presets, or use 'Apply to my headset' on the website.", ToolTipIcon.Info);
+                "Right-click the icon for presets. Starting CS2 or Valorant switches the EQ on by itself.", ToolTipIcon.Info);
+
+            games.GameStarted += (g, p) =>
+            {
+                if (p == null) { Balloon("GameEQ", g.Name + " started. No preset saved for it yet: pick " + g.Name + " on the website and click Apply."); return; }
+                if (Program.TryApply(p, out _)) Balloon(g.Name + " started", "EQ: " + p.Name);
+            };
+            games.GameClosed += (g, p) =>
+            {
+                if (Program.TryApply(p, out _)) Balloon(g.Name + " closed", "Back to: " + (p?.Name ?? "EQ off"));
+            };
+            lastDevice = AudioDevice.DefaultDeviceGuid();
+            timer.Tick += (s, e) => OnTimer();
+            timer.Start();
+        }
+
+        void Balloon(string title, string text, bool isFix = false)
+        {
+            balloonIsFix = isFix;
+            icon.ShowBalloonTip(3000, title, text, isFix ? ToolTipIcon.Warning : ToolTipIcon.Info);
+        }
+
+        void OnTimer()
+        {
+            games.Tick();
+            // every ~6 s: did Windows switch to another audio device (new headset, other USB port, Windows update)?
+            if (++ticks % 2 != 0) return;
+            var dev = AudioDevice.DefaultDeviceGuid();
+            if (dev == null || dev == lastDevice) return;
+            lastDevice = dev;
+            if (AudioDevice.IsApoActive(dev) == false)
+                Balloon("GameEQ isn't active on this device", AudioDevice.Name(dev) + "\nClick here to fix it.", isFix: true);
         }
 
         void BuildMenu()
@@ -27,6 +64,10 @@ namespace GameEQ
             var current = Program.GetSetting("Current") ?? "Off";
 
             menu.Items.Add(new ToolStripMenuItem("Now: " + current) { Enabled = false });
+            var dev = AudioDevice.DefaultDeviceGuid();
+            var active = AudioDevice.IsApoActive(dev);
+            menu.Items.Add(new ToolStripMenuItem((active == false ? "⚠ Not active on: " : "Headset: ") + AudioDevice.Name(dev)) { Enabled = false });
+            if (games.InGame) menu.Items.Add(new ToolStripMenuItem("Game: " + games.Current.Name + " (auto)") { Enabled = false });
             menu.Items.Add(new ToolStripSeparator());
 
             foreach (var preset in Preset.BuiltIn)
@@ -46,6 +87,14 @@ namespace GameEQ
             web.Click += (s, e) => Program.OpenUrl(Program.WebsiteUrl);
             menu.Items.Add(web);
 
+            var auto = new ToolStripMenuItem("Auto-switch when a game starts") { Checked = GameWatcher.Enabled };
+            auto.Click += (s, e) => GameWatcher.Enabled = !GameWatcher.Enabled;
+            menu.Items.Add(auto);
+
+            var fix = new ToolStripMenuItem("Check / fix my headset…");
+            fix.Click += (s, e) => Setup.CheckDevice(quiet: false);
+            menu.Items.Add(fix);
+
             var startup = new ToolStripMenuItem("Start with Windows") { Checked = Program.StartsWithWindows };
             startup.Click += (s, e) => Program.SetStartWithWindows(!Program.StartsWithWindows);
             menu.Items.Add(startup);
@@ -62,7 +111,11 @@ namespace GameEQ
         void Apply(Preset p)
         {
             if (Program.TryApply(p, out var error))
-                icon.ShowBalloonTip(2000, "EQ applied", p?.Name ?? "Off (flat)", ToolTipIcon.Info);
+            {
+                if (games.InGame) GameWatcher.SaveForGame(games.Current.Key, p);  // picked during a game = that game's preset
+                else GameWatcher.SaveDesktop(p);                                   // picked on the desktop = your normal preset
+                Balloon("EQ applied", (p?.Name ?? "Off (flat)") + (games.InGame ? "\nSaved for " + games.Current.Name + "." : ""));
+            }
             else
                 MessageBox.Show("Couldn't apply the preset:\n" + error, "GameEQ", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
@@ -90,6 +143,7 @@ namespace GameEQ
 
         void Quit()
         {
+            timer.Stop();
             icon.Visible = false;
             icon.Dispose();
             ExitThread();

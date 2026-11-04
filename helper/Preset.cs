@@ -10,6 +10,7 @@ namespace GameEQ
         public string Name;
         public double Preamp;
         public double[] Values; // 10 bands, see Apo.Bands
+        public string Game;     // website game key (e.g. "cs2") when the preset came from the site, else null
 
         public Preset(string name, double preamp, double[] values)
         {
@@ -56,7 +57,30 @@ namespace GameEQ
                     preamp = -(Math.Ceiling(Math.Max(0, values.Max())) + 1);
 
                 query.TryGetValue("n", out var name);
-                return new Preset(name, preamp, values);
+                var preset = new Preset(name, preamp, values);
+                if (query.TryGetValue("g", out var g) && GameWatcher.IsKnownGame(g)) preset.Game = g;
+                return preset;
+            }
+            catch { return null; }
+        }
+
+        /// <summary>Saved form: "name|preamp|v1,v2,...,v10" (for remembering presets per game).</summary>
+        public string Serialize()
+        {
+            var c = CultureInfo.InvariantCulture;
+            return Name.Replace("|", "/") + "|" + Preamp.ToString(c) + "|" + string.Join(",", Values.Select(v => v.ToString(c)));
+        }
+
+        public static Preset Deserialize(string s)
+        {
+            try
+            {
+                var parts = s.Split('|');
+                if (parts.Length != 3) return null;
+                var c = CultureInfo.InvariantCulture;
+                var values = parts[2].Split(',').Select(x => double.Parse(x, NumberStyles.Float, c)).ToArray();
+                if (values.Length != Apo.Bands.Length) return null;
+                return new Preset(parts[0], double.Parse(parts[1], NumberStyles.Float, c), values);
             }
             catch { return null; }
         }

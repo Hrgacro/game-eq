@@ -124,7 +124,7 @@
       <button class="sec" id="copyTable">Copy values as text</button>
       <button class="sec" id="share">Copy share link</button>
     </div>
-    <p class="note" id="applyNote">“Apply to my headset” needs the free <b>GameEQ Helper</b> for Windows. <a id="helperLink" style="color:var(--accent2)">Download it here</a>, run it once, then click Apply.</p>
+    <p class="note" id="applyNote">“Apply to my headset” needs the free <b>GameEQ Helper</b> for Windows. <a id="helperLink" style="color:var(--accent2)">Download it here</a> and run it once. It sets everything up for you. GameEQ remembers this preset for the selected game and switches it on by itself whenever that game starts.</p>
   </div>
 
   <div class="card" id="soundTest">
@@ -158,12 +158,13 @@
   </div>
   <div class="card">
     <h2 style="margin-top:0">How to use it</h2>
-    <p><b>Option 1: one click with GameEQ Helper (recommended, Windows)</b></p>
+    <p><b>Option 1: GameEQ Helper (recommended, Windows)</b></p>
     <ol>
       <li><a class="helperLink" style="color:var(--accent2)">Download GameEQ Helper</a> and run it. If Windows says “Windows protected your PC”, click <i>More info → Run anyway</i> (the app is open source but not code-signed yet).</li>
-      <li>If you don't have <a href="https://sourceforge.net/projects/equalizerapo/" style="color:var(--accent2)">Equalizer APO</a> yet, the Helper sends you there. Install it, tick your headset, restart the PC, and open the Helper again.</li>
-      <li>Allow the one-time permission prompt. After that, <b>Apply to my headset</b> on this page works instantly, and the green bars icon next to the clock has quick presets.</li>
-      <li>To undo everything: right-click the icon and choose <i>Restore original sound &amp; uninstall</i>.</li>
+      <li>The first time, it installs the sound engine for you (<a href="https://sourceforge.net/projects/equalizerapo/" style="color:var(--accent2)">Equalizer APO</a>, free and open source). Click through the installer, <b>tick only your headset</b> in the device list (GameEQ tells you which one), and restart if asked.</li>
+      <li>Allow the one-time permission prompt. The green bars icon appears next to the clock.</li>
+      <li>Pick your game here and click <b>Apply to my headset</b>. From now on GameEQ <b>switches automatically</b>: start CS2 and your CS2 preset turns on; close it and your normal sound comes back.</li>
+      <li>New headset, other USB port or a Windows update? GameEQ notices and offers to fix it (tray menu → <i>Check / fix my headset</i>). Undo everything: tray menu → <i>Restore original sound &amp; uninstall</i>.</li>
     </ol>
     <p><b>Option 2: headset app (G HUB, SteelSeries GG, Synapse, NGENUITY…):</b> open its EQ and set each band to the numbers in the table. If it has 5 bands, use 62 Hz / 250 Hz / 1 kHz / 4 kHz / 16 kHz.</p>
     <p><b>Option 3: Equalizer APO by hand:</b> click <b>Download for Equalizer APO</b>, put the file in <code>C:\Program Files\EqualizerAPO\config\</code> and add the line <code>Include: gameeq.txt</code> to <code>config.txt</code>.</p>
@@ -521,7 +522,7 @@ document.getElementById("dl").onclick = () => {
 const HELPER_URL = "https://github.com/Hrgacro/game-eq/releases/latest/download/GameEQHelper.exe";
 document.querySelectorAll("#helperLink,.helperLink").forEach(a => a.href = HELPER_URL);
 function applyLink(vals){
-  const q = "v=" + vals.join(",") + "&p=" + preampFor(vals) + "&n=" + encodeURIComponent(presetName());
+  const q = "v=" + vals.join(",") + "&p=" + preampFor(vals) + "&n=" + encodeURIComponent(presetName()) + "&g=" + state.game;
   return "gameeq://apply?" + q;
 }
 document.getElementById("apply").onclick = () => {

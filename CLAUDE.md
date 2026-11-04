@@ -27,7 +27,12 @@ GameEQ: pick a game, goals (Footsteps, Gunfight clarity, Less harsh…) and your
 - Repo renamed from cs2-pro-coach to game-eq (4 Nov 2026). Tonči asked to remove the old coach project completely:
   main history was restarted with a fresh first commit. Don't bring the coach code back.
 - Public repo, website live at https://hrgacro.github.io/game-eq/ (GitHub Pages, main / root), 4 Nov 2026.
-- Helper compiles on GitHub Actions; current Release helper-v1.0.2 (25 KB exe). Not yet run on a real PC.
+- Helper 1.1 (4 Nov 2026): installs Equalizer APO itself (downloads official installer), detects default playback device
+  (Core Audio) and checks APO is active on it (FxProperties CLSID -> EqualizerAPO.dll), opens Device Selector to fix,
+  watches device changes, auto-switches presets per game (process names in GameWatcher.cs), per-game presets saved
+  in HKCU\Software\GameEQ\Games from website Apply (&g=game) or tray picks during a game.
+- First real-PC test (1.0.2): Helper correctly sent Tonči to install Equalizer APO (not installed yet).
+  Tonči chose: keep Equalizer APO as the engine, hidden behind the Helper (no own audio driver).
 - Not yet tested with players. Plan: 5–10 players at the venue, EQ on vs off in real CS2.
 - Tonči's own headset: HyperX Cloud Alpha 2 Wireless.
 
