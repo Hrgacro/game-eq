@@ -40,6 +40,12 @@ GameEQ: pick a game, goals (Footsteps, Gunfight clarity, Less harsh…) and your
   Helper 1.1.2 comments those two lines out (tag "# (turned off by GameEQ) ", backup config.txt.before-gameeq,
   restored on uninstall) and warns about other active config lines that stack. EQ range made gentler:
   boosts max +4 dB, cuts max -6 dB (MAX_BOOST / MAX_CUT in index.html), so GameEQ's own drop is at most -4 dB.
+- 8 Nov 2026: Tonči: "everything is very quiet, that's not the point". Root issue: with preamp = -max boost, EQ keeps
+  footsteps at the same level and makes everything else quieter. Helper 1.2.0: Louder mode (default ON, tray toggle):
+  preamp 0, so footsteps get up to +4 dB louder (small crackle risk in loudest moments; fix = lower in-game volume).
+  Tray + "Check / fix my headset" show volume reduction (GameEQ vs other Equalizer APO settings). Current preset is
+  re-written on start (Apo.ReadCurrent) so the mode applies without re-applying from the site.
+- Be upfront with Tonči about limits: EQ can't make sound louder than the headset's max volume.
 - Not yet tested with players. Plan: 5–10 players at the venue, EQ on vs off in real CS2.
 - Tonči's own headset: HyperX Cloud Alpha 2 Wireless.
 

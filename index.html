@@ -164,6 +164,7 @@
       <li>The first time, it installs the sound engine for you (<a href="https://sourceforge.net/projects/equalizerapo/" style="color:var(--accent2)">Equalizer APO</a>, free and open source). Click through the installer, <b>tick only your headset</b> in the device list (GameEQ tells you which one), and restart if asked.</li>
       <li>Allow the one-time permission prompt. The green bars icon appears next to the clock.</li>
       <li>Pick your game here and click <b>Apply to my headset</b>. From now on GameEQ <b>switches automatically</b>: start CS2 and your CS2 preset turns on; close it and your normal sound comes back.</li>
+      <li><b>Louder mode</b> (tray menu, on by default) keeps your normal volume, so the footsteps really get louder. If the very loudest moments crackle, lower the in-game volume a little, or switch to Safe mode.</li>
       <li>New headset, other USB port or a Windows update? GameEQ notices and offers to fix it (tray menu → <i>Check / fix my headset</i>). Undo everything: tray menu → <i>Restore original sound &amp; uninstall</i>.</li>
     </ol>
     <p><b>Option 2: headset app (G HUB, SteelSeries GG, Synapse, NGENUITY…):</b> open its EQ and set each band to the numbers in the table. If it has 5 bands, use 62 Hz / 250 Hz / 1 kHz / 4 kHz / 16 kHz.</p>
@@ -502,7 +503,7 @@ function update(){
   document.getElementById("intensity").value = state.intensity;
   const pa = preampFor(vals);
   document.getElementById("preampNote").textContent = pa < 0
-    ? `Volume: ${pa} dB (lowered so the boosts can't distort). It will sound a bit quieter, so just turn your headset or Windows volume up a little. Preset: ${presetName()}`
+    ? `Volume: GameEQ Helper's Louder mode (on by default) keeps your normal volume, so footsteps get up to +${-pa} dB louder. In Safe mode, or with the Equalizer APO file, the volume is lowered by ${-pa} dB so even the loudest moments can't crackle. Preset: ${presetName()}`
     : `Volume: unchanged. Preset: ${presetName()}`;
   writeHash();
 }

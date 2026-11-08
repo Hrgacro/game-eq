@@ -30,6 +30,10 @@ namespace GameEQ
         static readonly Regex DemoInclude = new Regex(@"^\s*Include:\s*example\.txt\s*$", RegexOptions.IgnoreCase);
         static bool IsDemo(string line) => DemoPreamp.IsMatch(line) || DemoInclude.IsMatch(line);
 
+        static readonly Regex PreampRx = new Regex(@"^\s*Preamp:\s*(-?\d+(?:[.,]\d+)?)\s*dB\s*$", RegexOptions.IgnoreCase);
+        static readonly Regex AnyIncludeRx = new Regex(@"^\s*Include:\s*(.+?)\s*$", RegexOptions.IgnoreCase);
+        static double ParseDb(string s) => double.Parse(s.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture);
+
         public static readonly int[] Bands = { 31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000 };
 
         public static string ConfigDir
@@ -140,13 +144,86 @@ namespace GameEQ
 
         static string BuildOff() => "# GameEQ: off (flat)\r\n";
 
+        /// <summary>
+        /// Reads back the preset that is in gameeq.txt now (so it can be re-written, e.g. when Louder mode is switched).
+        /// The safe preamp is always "minus the biggest boost", so it is recomputed rather than read.
+        /// </summary>
+        public static Preset ReadCurrent()
+        {
+            try
+            {
+                if (!IsInstalled || !File.Exists(PresetPath)) return null;
+                var c = CultureInfo.InvariantCulture;
+                string name = "Custom"; double[] vals = null;
+                foreach (var raw in File.ReadAllLines(PresetPath))
+                {
+                    var l = raw.Trim();
+                    if (l.StartsWith("# GameEQ preset:")) name = l.Substring("# GameEQ preset:".Length).Trim();
+                    else if (l.StartsWith("GraphicEQ:", StringComparison.OrdinalIgnoreCase))
+                        vals = l.Substring("GraphicEQ:".Length).Split(';').Select(x => x.Trim()).Where(x => x.Length > 0)
+                                .Select(x => double.Parse(x.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[1], NumberStyles.Float, c))
+                                .ToArray();
+                }
+                if (vals == null || vals.Length != Bands.Length) return null;
+                return new Preset(name, -Math.Max(0, vals.Max()), vals);
+            }
+            catch { return null; }
+        }
+
+        /// <summary>How much GameEQ's own file lowers the volume right now (dB, 0 = not at all).</summary>
+        public static double GameEqPreamp()
+        {
+            try
+            {
+                if (!IsInstalled || !File.Exists(PresetPath)) return 0;
+                return File.ReadAllLines(PresetPath).Select(l => PreampRx.Match(l)).Where(m => m.Success).Sum(m => ParseDb(m.Groups[1].Value));
+            }
+            catch { return 0; }
+        }
+
+        /// <summary>
+        /// How much everything else in Equalizer APO (config.txt and files it includes, except GameEQ's) lowers the volume.
+        /// Approximate: it doesn't follow channel/device sections. Used only to warn the user.
+        /// </summary>
+        public static double OtherPreamp()
+        {
+            double sum = 0;
+            try
+            {
+                if (!IsInstalled || !File.Exists(ConfigTxt)) return 0;
+                foreach (var raw in File.ReadAllLines(ConfigTxt))
+                {
+                    var l = raw.Trim();
+                    if (l.StartsWith("#") || IncludeRegex.IsMatch(l)) continue;
+                    var m = PreampRx.Match(l);
+                    if (m.Success) { sum += ParseDb(m.Groups[1].Value); continue; }
+                    var inc = AnyIncludeRx.Match(l);
+                    if (!inc.Success) continue;
+                    var path = Path.Combine(ConfigDir, inc.Groups[1].Value);
+                    if (!File.Exists(path)) continue;
+                    foreach (var r2 in File.ReadAllLines(path))
+                    {
+                        if (r2.TrimStart().StartsWith("#")) continue;
+                        var m2 = PreampRx.Match(r2);
+                        if (m2.Success) sum += ParseDb(m2.Groups[1].Value);
+                    }
+                }
+            }
+            catch { }
+            return sum;
+        }
+
         static string Build(Preset p)
         {
             var c = CultureInfo.InvariantCulture;
             var sb = new StringBuilder();
             sb.Append("# GameEQ preset: ").Append(p.Name).Append("\r\n");
             sb.Append("# Written by GameEQ Helper. Use the tray icon to change or remove.\r\n");
-            sb.Append("Preamp: ").Append(p.Preamp.ToString("0.#", c)).Append(" dB\r\n");
+            // Louder mode: no volume reduction, so footsteps really get louder (tiny risk of crackle in the loudest moments).
+            // Safe mode: volume lowered by exactly the biggest boost, so nothing can ever distort.
+            var preamp = Program.LouderMode ? 0 : p.Preamp;
+            sb.Append("# Volume: ").Append(Program.LouderMode ? "Louder mode (no reduction)" : "Safe mode").Append("\r\n");
+            sb.Append("Preamp: ").Append(preamp.ToString("0.#", c)).Append(" dB\r\n");
             sb.Append("GraphicEQ: ");
             sb.Append(string.Join("; ", Bands.Select((f, i) => f.ToString(c) + " " + p.Values[i].ToString("0.#", c))));
             sb.Append("\r\n");

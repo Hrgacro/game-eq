@@ -113,6 +113,13 @@ namespace GameEQ
             ShowToastAndExit("EQ applied", note);
         }
 
+        /// <summary>On by default: keep the normal volume and make footsteps louder instead of everything else quieter.</summary>
+        public static bool LouderMode
+        {
+            get => GetSetting("Louder") != "off";
+            set => SetSetting("Louder", value ? "on" : "off");
+        }
+
         public static bool TryApply(Preset preset, out string error)
         {
             error = null;

@@ -162,10 +162,13 @@ namespace GameEQ
                     "\n\nNote: Equalizer APO also has other settings switched on, which add on top of GameEQ " +
                     "(volume drops and EQ stack up):\n  " + string.Join("\n  ", others.Take(6)) +
                     "\nIf the sound is too quiet or strange, remove them in Equalizer APO's Editor or in Peace.";
-                MessageBox.Show("GameEQ is active on:\n" + name + extra +
+                var mine = Apo.GameEqPreamp(); var otherDb = Apo.OtherPreamp();
+                var vol = "\n\nVolume reduction right now:\n  GameEQ: " + (mine < 0 ? mine.ToString("0.#") + " dB" : "none (Louder mode)") +
+                          "\n  Other Equalizer APO settings: " + (otherDb < 0 ? otherDb.ToString("0.#") + " dB  ⚠ this makes everything quieter" : "none");
+                MessageBox.Show("GameEQ is active on:\n" + name + vol + extra +
                     "\n\nNo effect? On Windows 11 check Settings → System → Sound → your headset → Audio enhancements is ON." +
                     "\nAlso set your headset app's own EQ (e.g. NGENUITY) to flat, so two EQs don't stack.",
-                    "GameEQ — check", MessageBoxButtons.OK, others.Length == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+                    "GameEQ — check", MessageBoxButtons.OK, others.Length == 0 && otherDb >= 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
                 return;
             }
             if (active == null)

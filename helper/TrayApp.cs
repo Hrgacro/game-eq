@@ -35,6 +35,10 @@ namespace GameEQ
             {
                 if (Program.TryApply(p, out _)) Balloon(g.Name + " closed", "Back to: " + (p?.Name ?? "EQ off"));
             };
+            // Re-write the current preset so the volume mode of this version applies right away.
+            var cur = Apo.ReadCurrent();
+            if (cur != null) Program.TryApply(cur, out _);
+
             lastDevice = AudioDevice.DefaultDeviceGuid();
             timer.Tick += (s, e) => OnTimer();
             timer.Start();
@@ -68,6 +72,10 @@ namespace GameEQ
             var active = AudioDevice.IsApoActive(dev);
             menu.Items.Add(new ToolStripMenuItem((active == false ? "⚠ Not active on: " : "Headset: ") + AudioDevice.Name(dev)) { Enabled = false });
             if (games.InGame) menu.Items.Add(new ToolStripMenuItem("Game: " + games.Current.Name + " (auto)") { Enabled = false });
+            var mine = Apo.GameEqPreamp(); var other = Apo.OtherPreamp();
+            var vol = "Volume: " + (mine < 0 ? "GameEQ " + mine.ToString("0.#") + " dB" : "GameEQ keeps it") +
+                      (other < 0 ? ", other EQ settings " + other.ToString("0.#") + " dB ⚠" : "");
+            menu.Items.Add(new ToolStripMenuItem(vol) { Enabled = false });
             menu.Items.Add(new ToolStripSeparator());
 
             foreach (var preset in Preset.BuiltIn)
@@ -86,6 +94,18 @@ namespace GameEQ
             var web = new ToolStripMenuItem("Make a custom preset (website)…");
             web.Click += (s, e) => Program.OpenUrl(Program.WebsiteUrl);
             menu.Items.Add(web);
+
+            var louder = new ToolStripMenuItem("Louder mode (keeps your volume)") { Checked = Program.LouderMode };
+            louder.Click += (s, e) =>
+            {
+                Program.LouderMode = !Program.LouderMode;
+                var p = Apo.ReadCurrent();
+                if (p != null) Program.TryApply(p, out _);
+                Balloon("GameEQ", Program.LouderMode
+                    ? "Louder mode ON: your volume stays, footsteps get louder. If the loudest moments crackle, lower the in-game volume a bit."
+                    : "Safe mode: volume lowered just enough that nothing can crackle. Turn your headset up to compensate.");
+            };
+            menu.Items.Add(louder);
 
             var auto = new ToolStripMenuItem("Auto-switch when a game starts") { Checked = GameWatcher.Enabled };
             auto.Click += (s, e) => GameWatcher.Enabled = !GameWatcher.Enabled;
